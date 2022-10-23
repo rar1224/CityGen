@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: db8747eeb4269a845a51687c01111b15
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - segment: {fileID: 6346902786517605273, guid: a829523fa52d829479f69c4a4495562f, type: 3}
+  - segment_object: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
