@@ -94,6 +94,13 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        foreach(Point pp in points)
+        {
+            if (pp.connections.Count == 0)
+            {
+                Debug.Log("error");
+            }
+        }
         float contPreference = 1f;
         float perpPreference = 1f;
             
@@ -254,8 +261,7 @@ public class Generator : MonoBehaviour
     {
         float x = Random.Range(origin_position.x - range, origin_position.x + range);
         float y = Random.Range(origin_position.x - range, origin_position.y + range);
-        Point pt = (Point) Instantiate(point, new Vector3(x, y, 0), Quaternion.identity);
-        return pt;
+        return SpawnPoint(x, y);
     }
 
     Point SpawnRandomPoint(Point origin)
@@ -292,37 +298,42 @@ public class Generator : MonoBehaviour
             Vector3 direction = (origin.transform.position - road.transform.position).normalized;
             Vector2 point_position = origin.transform.position + direction * Random.Range(0.0f, 3.0f);
 
-            Point pt = (Point)Instantiate(point, point_position, Quaternion.identity);
-
-            if(!CheckConnectivity(origin, pt))
-            {
-                Destroy(pt.gameObject);
-                return null;
-            }
+            Point regular_point = SpawnPoint(point_position.x, point_position.y);
 
             // perpendicular
             if (perpendicular)
             {
                 // spawn parallel point - available for perpendicular connecting
-                Point parallel = SpawnParallelPoint(origin, pt, direction);
+                Point parallel = SpawnParallelPoint(origin, regular_point, direction);
                 if (parallel != null) {
-                    Destroy(pt.gameObject);
-                    pt = parallel;
-                } 
-                else
-                {
+                    Destroy(regular_point.gameObject);
+                    ConnectPoints(origin, parallel);
+                    return parallel;
+                } else {
                     // spawn perpendicular point if possible
                     Point perp = SpawnPerpendicularPoint(origin, direction);
                     if (perp != null)
                     {
-                        Destroy(pt.gameObject);
-                        pt = perp;
+                        Destroy(regular_point.gameObject);
+                        ConnectPoints(origin, perp);
+                        return perp;
+                    } else
+                    {
+                        Destroy(regular_point.gameObject);
+                        return null;
                     }
                 }
-            } 
+            } else {
+                if (!CheckConnectivity(origin, regular_point))
+                {
+                    Destroy(regular_point.gameObject);
+                    return null;
+                }
+                ConnectPoints(origin, regular_point);
+                return regular_point;
+            }
 
-            ConnectPoints(origin, pt);
-            return pt;
+            
             
         } else return null;
         
@@ -369,7 +380,7 @@ public class Generator : MonoBehaviour
             Vector2 new_position = origin.transform.position + direction * other_mag;
 
             Destroy(pt.gameObject);
-            Point pt2 = (Point)Instantiate(point, new_position, Quaternion.identity);
+            Point pt2 = SpawnPoint(new_position.x, new_position.y);
 
             if (!CheckConnectivity(origin, pt2))
             {
@@ -402,7 +413,7 @@ public class Generator : MonoBehaviour
         }
 
         Vector2 point_position = new Vector2(origin.transform.position.x, origin.transform.position.y) + new_dir * Random.Range(0.0f, 3.0f);
-        Point pt = (Point)Instantiate(point, point_position, Quaternion.identity);
+        Point pt = SpawnPoint(point_position.x, point_position.y);
 
         if (!CheckConnectivity(origin, pt))
         {
@@ -444,6 +455,11 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        if (!CheckPlacement(point2))
+        {
+            return false;
+        }
+
         Vector2 direction = (point2.transform.position - point1.transform.position).normalized;
         RaycastHit2D[] hits = Physics2D.RaycastAll(point1.transform.position, direction);
 
@@ -465,6 +481,19 @@ public class Generator : MonoBehaviour
                 {
                     return false;
                 }
+            }
+        }
+
+        return true;
+    }
+
+    public bool CheckPlacement(Point pt)
+    {
+        foreach (Point other in points)
+        {
+            if (Vector3.Distance(pt.transform.position, other.transform.position) < 1)
+            {
+                return false;
             }
         }
 
