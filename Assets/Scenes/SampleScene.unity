@@ -322,6 +322,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   road: {fileID: 3125414015810215764, guid: 6212e9b0b965bec4183f18d41a3fc31d, type: 3}
   point: {fileID: -5772689262819122967, guid: a829523fa52d829479f69c4a4495562f, type: 3}
+  contPreference: 1
+  perpPreference: 1
+  lower_range: 3
+  upper_range: 3
 --- !u!4 &2007720516
 Transform:
   m_ObjectHideFlags: 0

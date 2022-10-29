@@ -10,6 +10,13 @@ public class Generator : MonoBehaviour
     public Road road;
     public Point point;
 
+    public float contPreference = 1;
+    public float perpPreference = 1;
+
+    public float lower_range = 3;
+    public float upper_range = 3;
+
+
     private int counter = 0;
 
     private List<Point> points = new List<Point>();
@@ -94,16 +101,6 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        foreach(Point pp in points)
-        {
-            if (pp.connections.Count == 0)
-            {
-                Debug.Log("error");
-            }
-        }
-        float contPreference = 1f;
-        float perpPreference = 1f;
-            
             int index = Random.Range(0, outsidePoints.Count);
 
             if (counter%2 == 1)
@@ -132,13 +129,14 @@ public class Generator : MonoBehaviour
         {
             if (counter > 20)
             {
+                origin.gameObject.GetComponent<Renderer>().material.color = Color.red;
                 outsidePoints.Remove(origin);
                 return null;
             }
 
             bool cont = contPreference > Random.Range(0.0f, 1.0f);
 
-            if (cont) pt = SpawnContinuousPoint(origin, perpPreference);
+            if (cont) pt = SpawnContinuousPoint(origin, perpPreference, lower_range, upper_range);
             else pt = SpawnRandomPoint(origin);
 
             counter++;
@@ -239,15 +237,14 @@ public class Generator : MonoBehaviour
             }
 
             return;
-        }
-
-        foreach (Point pt in outsidePoints)
+        } else
         {
-            if (CheckConnectivity(origin, pt))
-            {
-                ConnectPoints(origin, pt);
-                return;
-            }
+            Point pt = outsidePoints[Random.Range(0, outsidePoints.Count)];
+           if (CheckConnectivity(origin, pt))
+           {
+                    ConnectPoints(origin, pt);
+                    return;
+           }
         }
     }
 
@@ -266,7 +263,7 @@ public class Generator : MonoBehaviour
 
     Point SpawnRandomPoint(Point origin)
     {
-        Point chosen_point = SpawnAnyPoint(origin.transform.position, 5.0f);
+        Point chosen_point = SpawnAnyPoint(origin.transform.position, 3.0f);
 
         if (CheckConnectivity(origin, chosen_point))
         {
@@ -281,7 +278,7 @@ public class Generator : MonoBehaviour
         return chosen_point;
     }
 
-    Point SpawnContinuousPoint(Point origin, float perpPreference)
+    Point SpawnContinuousPoint(Point origin, float perpPreference, float lower_range, float upper_range)
     {
         int roads_number = origin.connections.Count;
         Road road = origin.connections[Random.Range(0, roads_number)];
@@ -296,7 +293,7 @@ public class Generator : MonoBehaviour
         if (road != null)
         {
             Vector3 direction = (origin.transform.position - road.transform.position).normalized;
-            Vector2 point_position = origin.transform.position + direction * Random.Range(0.0f, 3.0f);
+            Vector2 point_position = origin.transform.position + direction * Random.Range(lower_range, upper_range);
 
             Point regular_point = SpawnPoint(point_position.x, point_position.y);
 
@@ -377,7 +374,9 @@ public class Generator : MonoBehaviour
         {
             Vector2 road_vector = matched_road.point1.transform.position - matched_road.point2.transform.position;
             float other_mag = road_vector.magnitude;
-            Vector2 new_position = origin.transform.position + direction * other_mag;
+            float angle = Vector2.Angle(direction, road_vector);
+
+            Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle));
 
             Destroy(pt.gameObject);
             Point pt2 = SpawnPoint(new_position.x, new_position.y);
@@ -491,7 +490,11 @@ public class Generator : MonoBehaviour
     {
         foreach (Point other in points)
         {
-            if (Vector3.Distance(pt.transform.position, other.transform.position) < 1)
+            if (other == pt)
+            {
+                continue;
+            }
+            if (Vector3.Distance(pt.transform.position, other.transform.position) < 0.5)
             {
                 return false;
             }
