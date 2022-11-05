@@ -28,15 +28,18 @@ public class Generator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        CreateCentre(CentreShape.TETRA);
+        CreateCentre(CentreShape.SQUARE, 3f);
     }
 
-    void CreateCentre(CentreShape shape, int angles = 0, float pref = 1)
+    void CreateCentre(CentreShape shape, float pref = 1, int angles = 0)
     {
         switch(shape)
         {
             case CentreShape.TRIANGLE:
                 TriangleCentre();
+                break;
+            case CentreShape.SQUARE:
+                SquareCentre(pref);
                 break;
             case CentreShape.TETRA:
                 TetraCentre(pref);
@@ -78,6 +81,28 @@ public class Generator : MonoBehaviour
 
         centre.Add(SpawnPoint(Random.Range(-2f, -1f * squarePreference) * scale,
                             Random.Range(-2f, -1f * squarePreference) * scale));
+
+        for (int i = 0; i < 4; i++)
+        {
+            points.Add(centre[i]);
+            outsidePoints.Add(centre[i]);
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            ConnectPoints(centre[i], centre[i + 1]);
+        }
+
+        ConnectPoints(centre[3], centre[0]);
+    }
+
+    void SquareCentre(float length)
+    {
+        float pos = length / 2;
+        centre.Add(SpawnPoint(-pos, -pos));
+        centre.Add(SpawnPoint(-pos, pos));
+        centre.Add(SpawnPoint(pos, pos));
+        centre.Add(SpawnPoint(pos, -pos));
 
         for (int i = 0; i < 4; i++)
         {
@@ -203,7 +228,7 @@ public class Generator : MonoBehaviour
                         // check if possible to connect, otherwise leave the loop
                         if (CheckConnectivity(origin, chosen))
                         {
-                            ConnectPoints(origin, chosen);
+                            //ConnectPoints(origin, chosen);
                             return;
                         } else
                         {
@@ -225,7 +250,7 @@ public class Generator : MonoBehaviour
                     {
                         if (CheckConnectivity(origin, chosen))
                         {
-                            ConnectPoints(origin, chosen);
+                            //ConnectPoints(origin, chosen);
                             return;
                         }
                     }
@@ -308,7 +333,7 @@ public class Generator : MonoBehaviour
                     return parallel;
                 } else {
                     // spawn perpendicular point if possible
-                    Point perp = SpawnPerpendicularPoint(origin, direction);
+                    Point perp = SpawnPerpendicularPoint(origin, direction, lower_range, upper_range);
                     if (perp != null)
                     {
                         Destroy(regular_point.gameObject);
@@ -352,7 +377,10 @@ public class Generator : MonoBehaviour
             if (hit.collider.gameObject.tag == "Road")
             {
                 matched_road = hit.collider.gameObject.GetComponent<Road>();
-                set = true;
+                if (matched_road.point1 != origin && matched_road.point2 != origin)
+                {
+                    set = true;
+                }
                 break;
             }
         }
@@ -363,8 +391,11 @@ public class Generator : MonoBehaviour
             {
                 if (hit.collider.gameObject.tag == "Road")
                 {
-                    set = true;
                     matched_road = hit.collider.gameObject.GetComponent<Road>();
+                    if (matched_road.point1 != origin && matched_road.point2 != origin)
+                    {
+                        set = true;
+                    }
                     break;
                 }
             }
@@ -373,7 +404,7 @@ public class Generator : MonoBehaviour
         if (set)
         {
             Vector2 road_vector = matched_road.point1.transform.position - matched_road.point2.transform.position;
-            float other_mag = road_vector.magnitude;
+            float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
             float angle = Vector2.Angle(direction, road_vector);
 
             Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle));
@@ -397,7 +428,7 @@ public class Generator : MonoBehaviour
         }
     }
 
-    Point SpawnPerpendicularPoint(Point origin, Vector3 direction)
+    Point SpawnPerpendicularPoint(Point origin, Vector3 direction, float lower_range, float upper_range)
     {
         Vector2 left = Vector2.Perpendicular(direction);
         Vector2 right = -left;
@@ -411,7 +442,7 @@ public class Generator : MonoBehaviour
             new_dir = right;
         }
 
-        Vector2 point_position = new Vector2(origin.transform.position.x, origin.transform.position.y) + new_dir * Random.Range(0.0f, 3.0f);
+        Vector2 point_position = new Vector2(origin.transform.position.x, origin.transform.position.y) + new_dir * Random.Range(lower_range, upper_range);
         Point pt = SpawnPoint(point_position.x, point_position.y);
 
         if (!CheckConnectivity(origin, pt))
@@ -454,6 +485,10 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        if (point1 == point2)
+        {
+            return false;
+        }
         if (!CheckPlacement(point2))
         {
             return false;
@@ -474,6 +509,11 @@ public class Generator : MonoBehaviour
                 }
             } else if (point1.connections.Contains(road))
             {
+                if (point2.connections.Contains(road))
+                {
+                    return false;
+                }
+
                 Vector2 road_dir = (road.transform.position - point1.transform.position).normalized;
 
                 if (direction == road_dir)
@@ -505,6 +545,6 @@ public class Generator : MonoBehaviour
 
     enum CentreShape
     {
-        TRIANGLE, TETRA, ROUND
+        TRIANGLE, TETRA, ROUND, SQUARE
     }
 }
