@@ -9,6 +9,7 @@ public class Generator : MonoBehaviour
 {
     public Road road;
     public Point point;
+    public BuildingGenerator bdGenerator;
 
     public float contPreference = 1;
     public float perpPreference = 1;
@@ -21,7 +22,7 @@ public class Generator : MonoBehaviour
 
     private List<Point> points = new List<Point>();
     private List<Point> centre = new List<Point>();
-    private List<Road> roads = new List<Road>();
+    public List<Road> roads = new List<Road>();
 
     private List<Point> outsidePoints = new List<Point>();
 
@@ -126,6 +127,17 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+            if (counter == 10)
+        {
+            bdGenerator.Initialize(this);
+            counter++;
+            return;
+
+        } else if (counter > 10)
+        {
+            return;
+        }
+
             int index = Random.Range(0, outsidePoints.Count);
 
             if (counter%2 == 1)
@@ -143,6 +155,8 @@ public class Generator : MonoBehaviour
                 outsidePoints.Add(pt);
             }
             counter++;
+
+            
     }
 
     Point SpawnAndConnect(Point origin, float contPreference, float perpPreference)

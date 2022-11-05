@@ -59,6 +59,8 @@
     <Compile Include="Assets\Scripts\Generator.cs" />
     <Compile Include="Assets\Scripts\Point.cs" />
     <Compile Include="Assets\Scripts\Road.cs" />
+    <Compile Include="Assets\Scripts\BuildingGenerator.cs" />
+    <Compile Include="Assets\Building.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
