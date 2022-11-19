@@ -15,14 +15,17 @@ public class BuildingGenerator : MonoBehaviour
     {
         this.generator = generator;
         roads = generator.roads;
-        roadsDone = true;
+        roadsDone = false;
     }
 
     private void Update()
     {
         if (roadsDone)
         {
-            SpawnAlongRoad(roads[0], 0.4f);
+            foreach (Road rd in roads)
+            {
+                SpawnAlongRoad(rd, 0.4f);
+            }
             roadsDone = false;
         }
     }
@@ -33,10 +36,16 @@ public class BuildingGenerator : MonoBehaviour
         float magnitude = road.GetDirection().magnitude;
         int bdNumber = (int)(magnitude / distance);
 
+        Vector2 offset = Vector2.Perpendicular(road.GetDirection().normalized);
+        offset = offset * 0.2f;
+
         for (int i = 0; i < bdNumber; i++)
         {
-            Vector3 position = road.point1.transform.position + (Vector3) road.GetDirection().normalized * distance * i;
-            CreateBuilding(position, Quaternion.identity);
+            Vector3 position = road.point1.transform.position + (Vector3) road.GetDirection().normalized * distance * (i+1);
+            Vector3 position1 = position + new Vector3(offset.x, offset.y, 0);
+            Vector3 position2 = position + new Vector3(-offset.x, -offset.y, 0);
+            CreateBuilding(position1, Quaternion.identity);
+            CreateBuilding(position2, Quaternion.identity);
         }
 
     }

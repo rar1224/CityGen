@@ -22,4 +22,22 @@ public class Road : MonoBehaviour
         else if (point2 == current) return point1;
         else return null;
     }
+
+    // get starting point for a chosen direction
+    public Point GetStartingPoint(Vector3 vector)
+    {
+        if ((point2.transform.position - point1.transform.position).normalized == vector.normalized) {
+            return point1;
+        } else if ((point1.transform.position - point2.transform.position).normalized == vector.normalized) {
+            return point2;
+        } else
+        {
+            return null;
+        }
+    }
+
+    public float GetMagnitude()
+    {
+        return GetDirection().magnitude;
+    }
 }

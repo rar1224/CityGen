@@ -17,6 +17,8 @@ public class Generator : MonoBehaviour
     public float lower_range = 3;
     public float upper_range = 3;
 
+    public int iterations = 10;
+
 
     private int counter = 0;
 
@@ -127,13 +129,13 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-            if (counter == 10)
+            if (counter == iterations)
         {
             bdGenerator.Initialize(this);
             counter++;
             return;
 
-        } else if (counter > 10)
+        } else if (counter > iterations)
         {
             return;
         }
@@ -320,7 +322,7 @@ public class Generator : MonoBehaviour
     Point SpawnContinuousPoint(Point origin, float perpPreference, float lower_range, float upper_range)
     {
         int roads_number = origin.connections.Count;
-        Road road = origin.connections[Random.Range(0, roads_number)];
+        Road current_road = origin.connections[Random.Range(0, roads_number)];
 
         bool perpendicular = false;
 
@@ -329,9 +331,9 @@ public class Generator : MonoBehaviour
             perpendicular = true;
         }
 
-        if (road != null)
+        if (current_road != null)
         {
-            Vector3 direction = (origin.transform.position - road.transform.position).normalized;
+            Vector3 direction = (origin.transform.position - current_road.transform.position).normalized;
             Vector2 point_position = origin.transform.position + direction * Random.Range(lower_range, upper_range);
 
             Point regular_point = SpawnPoint(point_position.x, point_position.y);
@@ -340,7 +342,7 @@ public class Generator : MonoBehaviour
             if (perpendicular)
             {
                 // spawn parallel point - available for perpendicular connecting
-                Point parallel = SpawnParallelPoint(origin, regular_point, direction);
+                Point parallel = SpawnParallelPoint(origin, current_road, regular_point, direction);
                 if (parallel != null) {
                     Destroy(regular_point.gameObject);
                     ConnectPoints(origin, parallel);
@@ -376,13 +378,14 @@ public class Generator : MonoBehaviour
     }
 
     // spawn parallel when possible and nothing in the way
-    Point SpawnParallelPoint(Point origin, Point pt, Vector3 direction)
+    Point SpawnParallelPoint(Point origin, Road current_road, Point pt, Vector3 direction)
     {
         Vector2 left = Vector2.Perpendicular(direction);
         Vector2 right = -left;
 
         RaycastHit2D[] hit_left = Physics2D.RaycastAll(pt.transform.position, left);
         RaycastHit2D[] hit_right = Physics2D.RaycastAll(pt.transform.position, right);
+        float distance_to_hit = 0;
         Road matched_road = null;
         bool set = false;
 
@@ -393,6 +396,7 @@ public class Generator : MonoBehaviour
                 matched_road = hit.collider.gameObject.GetComponent<Road>();
                 if (matched_road.point1 != origin && matched_road.point2 != origin)
                 {
+                    distance_to_hit = hit.distance;
                     set = true;
                 }
                 break;
@@ -408,6 +412,7 @@ public class Generator : MonoBehaviour
                     matched_road = hit.collider.gameObject.GetComponent<Road>();
                     if (matched_road.point1 != origin && matched_road.point2 != origin)
                     {
+                        distance_to_hit = hit.distance;
                         set = true;
                     }
                     break;
@@ -417,11 +422,40 @@ public class Generator : MonoBehaviour
 
         if (set)
         {
+            // the other road - road x
             Vector2 road_vector = matched_road.point1.transform.position - matched_road.point2.transform.position;
             float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
-            float angle = Vector2.Angle(direction, road_vector);
 
-            Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle));
+            
+            // the current road - road a
+            float current_mag = current_road.GetMagnitude();
+
+            // angle between starting points of roads x and a
+            Point start_current = current_road.GetOtherPoint(origin);
+            Point start_other = matched_road.GetStartingPoint(direction);
+            Vector2 angle_vector = start_current.transform.position - start_other.transform.position;
+            float angle = Vector2.Angle(road_vector, angle_vector);
+
+            // defining the difference (y) between current (a) and matched (x) roads
+            float y;
+
+            if (angle > 90)
+            {
+                // matched road is longer
+                angle = 90 - angle;
+                y = distance_to_hit / Mathf.Tan(angle);
+            } else
+            {
+                y = - distance_to_hit / Mathf.Tan(angle);
+            }
+
+            // calculating b
+            float b = y + other_mag - current_mag;
+            
+
+            float angle2 = Vector2.Angle(direction, road_vector);
+            //Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle2));
+            Vector2 new_position = origin.transform.position + direction.normalized * b;
 
             Destroy(pt.gameObject);
             Point pt2 = SpawnPoint(new_position.x, new_position.y);
