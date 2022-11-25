@@ -422,6 +422,8 @@ public class Generator : MonoBehaviour
 
         if (set)
         {
+            Destroy(pt.gameObject);
+
             // the other road - road x
             Vector2 road_vector = matched_road.point1.transform.position - matched_road.point2.transform.position;
             float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
@@ -433,45 +435,58 @@ public class Generator : MonoBehaviour
             // angle between starting points of roads x and a
             Point start_current = current_road.GetOtherPoint(origin);
             Point start_other = matched_road.GetStartingPoint(direction);
-            Vector2 angle_vector = start_current.transform.position - start_other.transform.position;
-            float angle = Vector2.Angle(road_vector, angle_vector);
 
-            // defining the difference (y) between current (a) and matched (x) roads
-            float y;
-
-            if (angle > 90)
+            if (start_other != null)
             {
-                // matched road is longer
-                angle = 90 - angle;
-                y = distance_to_hit / Mathf.Tan(angle);
+                Vector2 angle_vector = start_current.transform.position - start_other.transform.position;
+                float angle = Vector2.Angle(road_vector, angle_vector);
+
+                // defining the difference (y) between current (a) and matched (x) roads
+                float y;
+
+                if (angle > 90)
+                {
+                    // matched road is longer
+                    angle = 90 - angle;
+                    y = distance_to_hit / Mathf.Tan(angle);
+                }
+                else if (angle == 0)
+                {
+                    y = 0;
+                }
+                else
+                {
+                    y = -distance_to_hit / Mathf.Tan(angle);
+                }
+
+                // calculating b
+                float b = y + other_mag - current_mag;
+
+
+                float angle2 = Vector2.Angle(direction, road_vector);
+                //Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle2));
+                Vector2 new_position = origin.transform.position + direction.normalized * b;
+
+                Point pt2 = SpawnPoint(new_position.x, new_position.y);
+
+                if (!CheckConnectivity(origin, pt2))
+                {
+                    Destroy(pt2.gameObject);
+                    return null;
+                }
+                else
+                {
+                    ConnectPoints(origin, pt2);
+                    return pt2;
+                }
             } else
             {
-                y = - distance_to_hit / Mathf.Tan(angle);
-            }
-
-            // calculating b
-            float b = y + other_mag - current_mag;
-            
-
-            float angle2 = Vector2.Angle(direction, road_vector);
-            //Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle2));
-            Vector2 new_position = origin.transform.position + direction.normalized * b;
-
-            Destroy(pt.gameObject);
-            Point pt2 = SpawnPoint(new_position.x, new_position.y);
-
-            if (!CheckConnectivity(origin, pt2))
-            {
-                Destroy(pt2.gameObject);
                 return null;
             }
-            else
-            {
-                ConnectPoints(origin, pt2);
-                return pt2;
-            }
+ 
         } else
         {
+            Destroy(pt.gameObject);
             return null;
         }
     }
