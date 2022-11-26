@@ -18,6 +18,7 @@ public class Generator : MonoBehaviour
     public float upper_range = 3;
 
     public int iterations = 10;
+    public float roadColliderRadius = 0.15f;
 
 
     private int counter = 0;
@@ -168,7 +169,7 @@ public class Generator : MonoBehaviour
 
         while (pt == null)
         {
-            if (counter > 20)
+            if (counter > 50)
             {
                 origin.gameObject.GetComponent<Renderer>().material.color = Color.red;
                 outsidePoints.Remove(origin);
@@ -423,21 +424,23 @@ public class Generator : MonoBehaviour
         if (set)
         {
             Destroy(pt.gameObject);
+            distance_to_hit += roadColliderRadius;
 
-            // the other road - road x
-            Vector2 road_vector = matched_road.point1.transform.position - matched_road.point2.transform.position;
-            float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
-
-            
-            // the current road - road a
-            float current_mag = current_road.GetMagnitude();
-
-            // angle between starting points of roads x and a
+            // get starting points of x and a
             Point start_current = current_road.GetOtherPoint(origin);
             Point start_other = matched_road.GetStartingPoint(direction);
 
             if (start_other != null)
             {
+
+            // the other road - road x
+            Vector2 road_vector = matched_road.GetOtherPoint(start_other).transform.position - start_other.transform.position;
+            float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
+
+            // the current road - road a
+            float current_mag = current_road.GetMagnitude();
+
+            // angle between starting points of roads x and a
                 Vector2 angle_vector = start_current.transform.position - start_other.transform.position;
                 float angle = Vector2.Angle(road_vector, angle_vector);
 
@@ -448,15 +451,15 @@ public class Generator : MonoBehaviour
                 {
                     // matched road is longer
                     angle = 90 - angle;
-                    y = distance_to_hit / Mathf.Tan(angle);
+                    y = distance_to_hit * Mathf.Tan(angle);
                 }
-                else if (angle == 0)
+                else if (angle == 0 || angle == 90)
                 {
                     y = 0;
                 }
                 else
                 {
-                    y = -distance_to_hit / Mathf.Tan(angle);
+                    y = -distance_to_hit * Mathf.Tan(angle);
                 }
 
                 // calculating b
@@ -548,6 +551,12 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        Vector2 pointVector = point2.transform.position - point1.transform.position;
+        if (pointVector.magnitude < lower_range || pointVector.magnitude > upper_range)
+        {
+            return false;
+        }
+
         if (point1 == point2)
         {
             return false;

@@ -373,7 +373,8 @@ MonoBehaviour:
   perpPreference: 1
   lower_range: 0
   upper_range: 3
-  iterations: 20
+  iterations: 100
+  roadColliderRadius: 0.15
   roads: []
 --- !u!4 &2007720516
 Transform:
