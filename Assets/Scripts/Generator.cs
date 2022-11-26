@@ -130,25 +130,22 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-            if (counter == iterations)
-        {
+      if (counter == iterations)
+      {
             bdGenerator.Initialize(this);
             counter++;
             return;
 
-        } else if (counter > iterations)
-        {
+      } else if (counter > iterations)
+      {
             return;
-        }
+      }
 
             int index = Random.Range(0, outsidePoints.Count);
 
-            if (counter%2 == 1)
+            foreach (Point outp in outsidePoints)
             {
-                foreach (Point outp in outsidePoints)
-                {
-                    TryConnect(outp, contPreference, perpPreference);
-                }
+                TryConnect(outp, contPreference, perpPreference);
             }
             
             Point pt = SpawnAndConnect(outsidePoints[index], contPreference, perpPreference);
@@ -224,30 +221,14 @@ public class Generator : MonoBehaviour
 
                 foreach (RaycastHit2D hit in hits_left)
                 {
-                    if (hit.collider.tag == "Road")
+                    if (CheckPointHit(origin, hit))
                     {
-                        continue;
-                    }
-
-                    Point chosen = hit.collider.gameObject.GetComponent<Point>();
-
-                    if (hit.collider.tag == "Point")
-                    {
-                        // check if point is valid
-                        if (origin == chosen)
+                        if (CheckConnectivity(origin, hit.collider.gameObject.GetComponent<Point>()))
                         {
-                            continue;
-                        } else if (origin.IsConnectedTo(chosen))
-                        {
-                            break;
-                        }
-
-                        // check if possible to connect, otherwise leave the loop
-                        if (CheckConnectivity(origin, chosen))
-                        {
-                            //ConnectPoints(origin, chosen);
+                            ConnectPoints(origin, hit.collider.gameObject.GetComponent<Point>());
                             return;
-                        } else
+                        }
+                        else
                         {
                             break;
                         }
@@ -256,29 +237,22 @@ public class Generator : MonoBehaviour
 
                 foreach (RaycastHit2D hit in hits_right)
                 {
-                    if (hit.collider.tag == "Road")
+                    if (CheckPointHit(origin, hit))
                     {
-                        continue;
-                    }
-
-                    Point chosen = hit.collider.gameObject.GetComponent<Point>();
-
-                    if (hit.collider.tag == "Point" && !origin.IsConnectedTo(chosen))
-                    {
-                        if (CheckConnectivity(origin, chosen))
+                        if (CheckConnectivity(origin, hit.collider.gameObject.GetComponent<Point>()))
                         {
-                            //ConnectPoints(origin, chosen);
+                            ConnectPoints(origin, hit.collider.gameObject.GetComponent<Point>());
                             return;
                         }
-                    }
-                    else
-                    {
-                        break;
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
-
             return;
+
         } else
         {
             Point pt = outsidePoints[Random.Range(0, outsidePoints.Count)];
@@ -287,6 +261,32 @@ public class Generator : MonoBehaviour
                     ConnectPoints(origin, pt);
                     return;
            }
+        }
+    }
+
+    bool CheckPointHit(Point origin, RaycastHit2D hit)
+    {
+        if (hit.collider.tag == "Road")
+        {
+            return false;
+        } else
+        {
+            if (hit.collider.tag == "Point")
+            {
+                Point hitPoint = hit.collider.gameObject.GetComponent<Point>();
+
+                if (hitPoint == origin || hitPoint.IsConnectedTo(origin))
+                {
+                    return false;
+                } else
+                {
+                    return true;
+                }
+            } else
+            {
+                return false;
+            }
+            
         }
     }
 
