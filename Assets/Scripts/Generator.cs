@@ -198,8 +198,9 @@ public class Generator : MonoBehaviour
                 if (hit.collider.tag == "Point")
                 {
                     Point chosen = hit.collider.gameObject.GetComponent<Point>();
+                    Vector2 vector = chosen.transform.position - origin.transform.position;
 
-                    if (CheckConnectivity(origin, chosen))
+                    if (chosen != origin && CheckConnectivity(origin, chosen))
                     {
                         ConnectPoints(origin, chosen);
                         return;
@@ -221,7 +222,7 @@ public class Generator : MonoBehaviour
 
                 foreach (RaycastHit2D hit in hits_left)
                 {
-                    if (CheckPointHit(origin, hit))
+                    if (CheckPointHit(origin, hit, left))
                     {
                         if (CheckConnectivity(origin, hit.collider.gameObject.GetComponent<Point>()))
                         {
@@ -237,7 +238,7 @@ public class Generator : MonoBehaviour
 
                 foreach (RaycastHit2D hit in hits_right)
                 {
-                    if (CheckPointHit(origin, hit))
+                    if (CheckPointHit(origin, hit, right))
                     {
                         if (CheckConnectivity(origin, hit.collider.gameObject.GetComponent<Point>()))
                         {
@@ -264,7 +265,7 @@ public class Generator : MonoBehaviour
         }
     }
 
-    bool CheckPointHit(Point origin, RaycastHit2D hit)
+    bool CheckPointHit(Point origin, RaycastHit2D hit, Vector2 direction)
     {
         if (hit.collider.tag == "Road")
         {
@@ -274,6 +275,7 @@ public class Generator : MonoBehaviour
             if (hit.collider.tag == "Point")
             {
                 Point hitPoint = hit.collider.gameObject.GetComponent<Point>();
+                Vector2 vector = hitPoint.transform.position - origin.transform.position;
 
                 if (hitPoint == origin || hitPoint.IsConnectedTo(origin))
                 {
@@ -526,6 +528,7 @@ public class Generator : MonoBehaviour
         float x = (point1.transform.position.x + point2.transform.position.x) / 2;
         float y = (point1.transform.position.y + point2.transform.position.y) / 2;
         Vector2 directionVector = point1.transform.position - point2.transform.position;
+
         Road connect = (Road)Instantiate(road, new Vector3(x, y, 0), Quaternion.FromToRotation(Vector3.up, directionVector));
         connect.transform.localScale += new Vector3(0, directionVector.magnitude - 1, 0);
 
@@ -551,12 +554,19 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        if (point1.connections.Count > 5 || point2.connections.Count > 5)
+        {
+            return false;
+        }
+
+        // check the possible length of road between
         Vector2 pointVector = point2.transform.position - point1.transform.position;
         if (pointVector.magnitude < lower_range || pointVector.magnitude > upper_range)
         {
             return false;
         }
 
+        // check if points are placed correctly
         if (point1 == point2)
         {
             return false;
@@ -566,6 +576,7 @@ public class Generator : MonoBehaviour
             return false;
         }
 
+        // check if possible roads don't cut across other roads
         Vector2 direction = (point2.transform.position - point1.transform.position).normalized;
         RaycastHit2D[] hits = Physics2D.RaycastAll(point1.transform.position, direction);
 

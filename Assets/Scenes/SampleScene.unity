@@ -321,7 +321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   generator: {fileID: 2007720515}
-  building: {fileID: -1152703097383094950, guid: ddbc14539c168ea4ca4aceb36fba5554, type: 3}
+  building: {fileID: 2330549161238871275, guid: 2ccd77a28ce32f44c90ef8ebbaae3372, type: 3}
 --- !u!4 &1899434877
 Transform:
   m_ObjectHideFlags: 0
@@ -369,11 +369,11 @@ MonoBehaviour:
   road: {fileID: 3125414015810215764, guid: 6212e9b0b965bec4183f18d41a3fc31d, type: 3}
   point: {fileID: -5772689262819122967, guid: a829523fa52d829479f69c4a4495562f, type: 3}
   bdGenerator: {fileID: 1899434876}
-  contPreference: 0.95
-  perpPreference: 0.95
-  lower_range: 0
+  contPreference: 0.9
+  perpPreference: 0.9
+  lower_range: 1
   upper_range: 3
-  iterations: 100
+  iterations: 20
   roadColliderRadius: 0.15
   roads: []
 --- !u!4 &2007720516
