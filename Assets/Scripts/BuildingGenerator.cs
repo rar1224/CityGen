@@ -18,7 +18,7 @@ public class BuildingGenerator : MonoBehaviour
     {
         this.generator = generator;
         roads = generator.roads;
-        roadsDone = true;
+        roadsDone = false;
         roadsNumber = roads.Count;
     }
 

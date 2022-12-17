@@ -11,23 +11,24 @@ public class Generator : MonoBehaviour
     public Point point;
     public BuildingGenerator bdGenerator;
 
-    public float contPreference = 1;
-    public float perpPreference = 1;
+    public float contPreference;
+    public float perpPreference;
 
-    public float lower_range = 3;
-    public float upper_range = 3;
+    public float lower_range;
+    public float upper_range;
 
-    public int iterations = 10;
-    public float roadColliderRadius = 0.15f;
-
+    public int iterations;
+    public float roadColliderRadius;
 
     private int counter = 0;
+    private bool generating = false;
 
     private List<Point> points = new List<Point>();
     private List<Point> centre = new List<Point>();
     public List<Road> roads = new List<Road>();
 
     private List<Point> outsidePoints = new List<Point>();
+
 
     // Start is called before the first frame update
     void Start()
@@ -130,33 +131,36 @@ public class Generator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-      if (counter == iterations)
-      {
-            bdGenerator.Initialize(this);
-            counter++;
-            return;
-
-      } else if (counter > iterations)
-      {
-            return;
-      }
-
-            int index = Random.Range(0, outsidePoints.Count);
-
-            foreach (Point outp in outsidePoints)
+        if (generating)
+        {
+            if (counter == iterations)
             {
-                TryConnect(outp, contPreference, perpPreference);
+                bdGenerator.Initialize(this);
+                counter++;
+                generating = false;
+                return;
+
+            }
+
+            if (outsidePoints.Count > 0)
+            {
+                int index = Random.Range(0, outsidePoints.Count);
+
+                foreach (Point outp in outsidePoints)
+                {
+                    TryConnect(outp, contPreference, perpPreference);
+                }
+
+                Point pt = SpawnAndConnect(outsidePoints[index], contPreference, perpPreference);
+                if (pt)
+                {
+                    points.Add(pt);
+                    outsidePoints.Add(pt);
+                }
             }
             
-            Point pt = SpawnAndConnect(outsidePoints[index], contPreference, perpPreference);
-            if (pt)
-            {
-                points.Add(pt);
-                outsidePoints.Add(pt);
-            }
             counter++;
-
-            
+        }  
     }
 
     Point SpawnAndConnect(Point origin, float contPreference, float perpPreference)
@@ -624,6 +628,42 @@ public class Generator : MonoBehaviour
         }
 
         return true;
+    }
+
+    public void RestartParameters(float contPreference, float perpPreference, float lower_range, float upper_range, int iterations,
+        float roadColliderRadius)
+    {
+        this.contPreference = contPreference;
+        this.perpPreference = perpPreference;
+        this.lower_range = lower_range;
+        this.upper_range = upper_range;
+        this.iterations = iterations;
+        this.roadColliderRadius = roadColliderRadius;
+        generating = true;
+    }
+
+    public void RemoveModel()
+    {
+        outsidePoints.Clear();
+        centre.Clear();
+
+        foreach (Road rd in roads)
+        {
+            // destroy
+        }
+
+        foreach (Point pt in points)
+        {
+            // destroy
+        }
+
+        roads.Clear();
+        points.Clear();
+    }
+
+    public bool IsGenerating()
+    {
+        return generating;
     }
 
     enum CentreShape
