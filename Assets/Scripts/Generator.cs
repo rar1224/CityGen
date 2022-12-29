@@ -33,10 +33,10 @@ public class Generator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        CreateCentre(CentreShape.SQUARE, 3f);
+        //CreateCentre(CentreShape.SQUARE, 3f);
     }
 
-    void CreateCentre(CentreShape shape, float pref = 1, int angles = 0)
+    void CreateCentre(CentreShape shape = CentreShape.SQUARE, float pref = 3, int angles = 0)
     {
         switch(shape)
         {
@@ -649,12 +649,12 @@ public class Generator : MonoBehaviour
 
         foreach (Road rd in roads)
         {
-            // destroy
+            Destroy(rd.gameObject);
         }
 
         foreach (Point pt in points)
         {
-            // destroy
+            Destroy(pt.gameObject);
         }
 
         roads.Clear();
@@ -664,6 +664,13 @@ public class Generator : MonoBehaviour
     public bool IsGenerating()
     {
         return generating;
+    }
+
+    public void StartOver()
+    {
+        counter = 0;
+        generating = true;
+        CreateCentre();
     }
 
     enum CentreShape
