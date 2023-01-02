@@ -197,17 +197,22 @@ public class Generator : MonoBehaviour
             {
                 Point other = road.GetOtherPoint(origin);
                 Vector2 direction = origin.transform.position - other.transform.position;
-                RaycastHit2D hit = Physics2D.Raycast(origin.transform.position, direction);
+                RaycastHit[] hits = Physics.RaycastAll(origin.transform.position, direction);
 
-                if (hit.collider.tag == "Point")
+                foreach (RaycastHit hit in hits)
                 {
-                    Point chosen = hit.collider.gameObject.GetComponent<Point>();
-                    Vector2 vector = chosen.transform.position - origin.transform.position;
-
-                    if (chosen != origin && CheckConnectivity(origin, chosen))
+                    if (hit.collider.tag == "Point")
                     {
-                        ConnectPoints(origin, chosen);
-                        return;
+                        Point chosen = hit.collider.gameObject.GetComponent<Point>();
+                        Vector2 vector = chosen.transform.position - origin.transform.position;
+
+                        if (chosen != origin && CheckConnectivity(origin, chosen))
+                        {
+                            ConnectPoints(origin, chosen);
+                            return;
+                        }
+
+                        break;
                     }
                 }
             }
@@ -221,10 +226,10 @@ public class Generator : MonoBehaviour
                 Point other = road.GetOtherPoint(origin);
                 Vector2 left = Vector2.Perpendicular(origin.transform.position - other.transform.position);
                 Vector2 right = -left;
-                RaycastHit2D[] hits_left = Physics2D.RaycastAll(origin.transform.position, left);
-                RaycastHit2D[] hits_right = Physics2D.RaycastAll(origin.transform.position, right);
+                RaycastHit[] hits_left = Physics.RaycastAll(origin.transform.position, left);
+                RaycastHit[] hits_right = Physics.RaycastAll(origin.transform.position, right);
 
-                foreach (RaycastHit2D hit in hits_left)
+                foreach (RaycastHit hit in hits_left)
                 {
                     if (CheckPointHit(origin, hit, left))
                     {
@@ -240,7 +245,7 @@ public class Generator : MonoBehaviour
                     }
                 }
 
-                foreach (RaycastHit2D hit in hits_right)
+                foreach (RaycastHit hit in hits_right)
                 {
                     if (CheckPointHit(origin, hit, right))
                     {
@@ -269,7 +274,7 @@ public class Generator : MonoBehaviour
         }
     }
 
-    bool CheckPointHit(Point origin, RaycastHit2D hit, Vector2 direction)
+    bool CheckPointHit(Point origin, RaycastHit hit, Vector2 direction)
     {
         if (hit.collider.tag == "Road")
         {
@@ -390,13 +395,13 @@ public class Generator : MonoBehaviour
         Vector2 left = Vector2.Perpendicular(direction);
         Vector2 right = -left;
 
-        RaycastHit2D[] hit_left = Physics2D.RaycastAll(pt.transform.position, left);
-        RaycastHit2D[] hit_right = Physics2D.RaycastAll(pt.transform.position, right);
+        RaycastHit[] hit_left = Physics.RaycastAll(pt.transform.position, left);
+        RaycastHit[] hit_right = Physics.RaycastAll(pt.transform.position, right);
         float distance_to_hit = 0;
         Road matched_road = null;
         bool set = false;
 
-        foreach (RaycastHit2D hit in hit_left)
+        foreach (RaycastHit hit in hit_left)
         {
             if (hit.collider.gameObject.tag == "Road")
             {
@@ -412,7 +417,7 @@ public class Generator : MonoBehaviour
 
         if (!set)
         {
-            foreach (RaycastHit2D hit in hit_right)
+            foreach (RaycastHit hit in hit_right)
             {
                 if (hit.collider.gameObject.tag == "Road")
                 {
@@ -534,7 +539,7 @@ public class Generator : MonoBehaviour
         Vector2 directionVector = point1.transform.position - point2.transform.position;
 
         Road connect = (Road)Instantiate(road, new Vector3(x, y, 0), Quaternion.FromToRotation(Vector3.up, directionVector));
-        connect.transform.localScale += new Vector3(0, directionVector.magnitude - 1, 0);
+        connect.transform.localScale = Vector3.Scale(connect.transform.localScale, new Vector3(1, directionVector.magnitude, 1));
 
         connect.point1 = point1;
         connect.point2 = point2;
@@ -558,9 +563,29 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        // check if there aren't too many lanes
         if (point1.connections.Count > 5 || point2.connections.Count > 5)
         {
             return false;
+        }
+
+        // check if the angle of road isn't too narrow
+        Vector2 possibleRoad = point1.transform.position - point2.transform.position;
+
+        foreach(Road rd in point1.connections)
+        {
+            if (Vector2.Angle(rd.GetVector(point1), -possibleRoad) < 20)
+            {
+                return false;
+            }
+        }
+
+        foreach (Road rd in point2.connections)
+        {
+            if (Vector2.Angle(rd.GetVector(point2), possibleRoad) < 20)
+            {
+                return false;
+            }
         }
 
         // check the possible length of road between
@@ -582,13 +607,13 @@ public class Generator : MonoBehaviour
 
         // check if possible roads don't cut across other roads
         Vector2 direction = (point2.transform.position - point1.transform.position).normalized;
-        RaycastHit2D[] hits = Physics2D.RaycastAll(point1.transform.position, direction);
+        RaycastHit[] hits = Physics.RaycastAll(point1.transform.position, direction);
 
         foreach (Road road in roads)
         {
             if (!point1.connections.Contains(road) && !point2.connections.Contains(road))
             {
-                foreach (RaycastHit2D hit in hits) {
+                foreach (RaycastHit hit in hits) {
                     if (hit.collider.gameObject == road.gameObject)
                     {
                         return false;
@@ -644,6 +669,7 @@ public class Generator : MonoBehaviour
 
     public void RemoveModel()
     {
+        bdGenerator.RemoveBuildings();
         outsidePoints.Clear();
         centre.Clear();
 

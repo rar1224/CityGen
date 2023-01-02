@@ -5,6 +5,8 @@ using UnityEngine;
 public class BuildingGenerator : MonoBehaviour
 {
     public Generator generator;
+    public BuildingModelGenerator modelGenerator;
+
     private List<Road> roads;
     private List<Building> buildings = new List<Building>();
 
@@ -18,8 +20,9 @@ public class BuildingGenerator : MonoBehaviour
     {
         this.generator = generator;
         roads = generator.roads;
-        roadsDone = false;  // no generating
+        roadsDone = true;  // no generating
         roadsNumber = roads.Count;
+        roadCounter = 0;
     }
 
     private void Update()
@@ -33,7 +36,6 @@ public class BuildingGenerator : MonoBehaviour
 
     void SpawnAlongRoad(Road road, float distance)
     {
-        road.GetComponent<Renderer>().material.color = Color.green;
         float magnitude = road.GetDirection().magnitude;
         int bdNumber = (int)(magnitude / distance);
 
@@ -45,8 +47,16 @@ public class BuildingGenerator : MonoBehaviour
             Vector3 position = road.point1.transform.position + (Vector3) road.GetDirection().normalized * distance * (i+1);
             Vector3 position1 = position + new Vector3(offset.x, offset.y, 0);
             Vector3 position2 = position + new Vector3(-offset.x, -offset.y, 0);
-            if (IsPositionValid(position1)) CreateBuilding(position1, road.transform.rotation);
-            if (IsPositionValid(position2)) CreateBuilding(position2, road.transform.rotation);
+            if (IsPositionValid(position1))
+            {
+                Building bd = modelGenerator.CreateBuilding(position1, road.transform.rotation);
+                buildings.Add(bd);
+            }
+            if (IsPositionValid(position2))
+            {
+                Building bd = modelGenerator.CreateBuilding(position2, road.transform.rotation);
+                buildings.Add(bd);
+            }
         }
 
     }
@@ -65,9 +75,11 @@ public class BuildingGenerator : MonoBehaviour
         }
     }
 
-    Building CreateBuilding(Vector3 position, Quaternion rotation)
+    public Building CreateBuilding(Vector3 position, Quaternion rotation)
     {
         Building bd;
+
+        bd = (Building)Instantiate(building, position, rotation);
 
         if (rotation.x > 0)
         {
@@ -83,5 +95,20 @@ public class BuildingGenerator : MonoBehaviour
         bd.transform.localScale += new Vector3(2f, 2f, 2f);
         buildings.Add(bd);
         return bd;
+    }
+
+    public void RemoveBuildings()
+    {
+        foreach (Building bd in buildings)
+        {
+            foreach (Transform child in bd.transform)
+            {
+                Destroy(child.gameObject);
+            }
+            Destroy(bd.gameObject);
+        }
+        buildings.Clear();
+        roadsDone = false;
+        
     }
 }

@@ -40,4 +40,16 @@ public class Road : MonoBehaviour
     {
         return GetDirection().magnitude;
     }
+
+    public Vector2 GetVector(Point origin)
+    {
+        if (point1 == origin)
+        {
+            return point2.transform.position - point1.transform.position;
+        }
+        else
+        {
+            return point1.transform.position - point2.transform.position;
+        }
+    }
 }

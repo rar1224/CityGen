@@ -6,11 +6,12 @@ public class BuildingModelGenerator : MonoBehaviour
 {
     public GameObject fourSideModel;
     public GameObject fiveSideModel;
+    public Building building;
 
     // Start is called before the first frame update
     void Start()
     {
-        CreateBuilding();
+
     }
 
     // Update is called once per frame
@@ -19,11 +20,12 @@ public class BuildingModelGenerator : MonoBehaviour
         
     }
 
-    void CreateBuilding()
+    public Building CreateBuilding(Vector3 basicPosition, Quaternion basicRotation)
     {
         // number of segments on the ground floor
         int segmentNumber = Random.Range(1, 5);
         List<GameObject> groundFloor = new List<GameObject>();
+        List<GameObject> allSegments = new List<GameObject>();
 
         // defining the floor plan
         for (int i = 0; i < segmentNumber; i++)
@@ -40,14 +42,16 @@ public class BuildingModelGenerator : MonoBehaviour
 
             if (groundFloor.Count == 0)
             {
-                GameObject segment = Instantiate(model, new Vector3(0, 0, 0), Quaternion.identity);
+                Quaternion rotation = Quaternion.Euler(-90, 0, 0);
+                GameObject segment = Instantiate(model, basicPosition, basicRotation * rotation);
                 groundFloor.Add(segment);
+                allSegments.Add(segment);
             } else
             {
-                // fix
-                GameObject neighbor = groundFloor[Random.Range(0, segmentNumber - 1)];
+                GameObject neighbor = groundFloor[Random.Range(0, groundFloor.Count)];
                 int side = Random.Range(0, 3);
-                Quaternion rotation = Quaternion.Euler(0, 0, 90 * side);
+                Quaternion rotation = Quaternion.Euler(-90, 0, 90 * side);
+                Quaternion neighbor_rotation = Quaternion.Euler(0, 0, neighbor.transform.rotation.z);
                 Vector3 offset = new Vector3();
 
                 switch(side)
@@ -67,19 +71,30 @@ public class BuildingModelGenerator : MonoBehaviour
                 }
 
                 // fix rotation
-                GameObject segment = Instantiate(model, neighbor.transform.position + offset, Quaternion.identity);
+                GameObject segment = Instantiate(model, neighbor.transform.position + offset, rotation * neighbor_rotation);
                 groundFloor.Add(segment);
+                allSegments.Add(segment);
             }
         }
 
+        // height of segments
         foreach (GameObject groundSegment in groundFloor) {
             int height = Random.Range(1, 4);
 
             for (int i = 0; i < height; i++)
             {
-                GameObject newFloor = Instantiate(groundSegment, groundSegment.transform.position + new Vector3(0, 0, -0.1f * (i + 1)), groundSegment.transform.rotation);
+                GameObject newFloor = Instantiate(groundSegment, groundSegment.transform.position + new Vector3(0, 0, -0.2f * (i + 1)), groundSegment.transform.rotation);
+                allSegments.Add(newFloor);
             }
         }
-        // height of segments
+
+        Building currentBuilding = (Building) Instantiate(building, basicPosition, basicRotation);
+
+        foreach(GameObject segment in allSegments)
+        {
+            segment.transform.parent = currentBuilding.transform;
+        }
+
+        return currentBuilding;
     }
 }
