@@ -6,9 +6,11 @@ public class Road : MonoBehaviour
 {
     public Point point1;
     public Point point2;
+    private Material material;
+
     private void Awake()
     {
-        
+
     }
 
     public Vector2 GetDirection()
@@ -51,5 +53,11 @@ public class Road : MonoBehaviour
         {
             return point1.transform.position - point2.transform.position;
         }
+    }
+
+    public void SetTiling()
+    {
+        this.gameObject.GetComponent<Renderer>().material.mainTextureScale =
+            new Vector2(1, GetMagnitude());
     }
 }

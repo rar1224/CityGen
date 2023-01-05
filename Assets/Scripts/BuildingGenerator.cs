@@ -40,7 +40,7 @@ public class BuildingGenerator : MonoBehaviour
         int bdNumber = (int)(magnitude / distance);
 
         Vector2 offset = Vector2.Perpendicular(road.GetDirection().normalized);
-        offset = offset * 0.5f;
+        offset = offset * 0.7f;
 
         for (int i = 0; i < bdNumber; i++)
         {
@@ -75,27 +75,6 @@ public class BuildingGenerator : MonoBehaviour
         }
     }
 
-    public Building CreateBuilding(Vector3 position, Quaternion rotation)
-    {
-        Building bd;
-
-        bd = (Building)Instantiate(building, position, rotation);
-
-        if (rotation.x > 0)
-        {
-            
-            bd = (Building)Instantiate(building, position, rotation);
-
-        } else
-        {
-            Quaternion correct = Quaternion.Euler(Vector3.right * 180);
-            bd = (Building)Instantiate(building, position, rotation * correct);
-        }
-        
-        bd.transform.localScale += new Vector3(2f, 2f, 2f);
-        buildings.Add(bd);
-        return bd;
-    }
 
     public void RemoveBuildings()
     {

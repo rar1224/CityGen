@@ -27,6 +27,8 @@ public class UIController : MonoBehaviour
     public GameObject upperRangeInput;
     public GameObject iterationsInput;
 
+    public GameObject centre;
+
     void Awake()
     {
         GetParameters();
@@ -45,6 +47,8 @@ public class UIController : MonoBehaviour
         {
             regenerateButton.interactable = true;
         }
+
+        //centre.transform.RotateAround(Vector3.zero, Vector3.forward, 30 * Time.deltaTime);
     }
 
     void GetParameters()
@@ -58,10 +62,17 @@ public class UIController : MonoBehaviour
 
     void Regenerate()
     {
+        //generator.bdGenerator.modelGenerator.CreateBuilding(new Vector3(0, 0, 0), Quaternion.identity);
+
+        /*
         GetParameters();
         generator.RemoveModel();
         generator.RestartParameters(contPreference, perpPreference, lower_range, upper_range, iterations, roadColliderRadius);
         generator.StartOver();
+        */
+
+        generator.CreateCentre(Generator.CentreShape.TRIANGLE);
+        
     }
 
 

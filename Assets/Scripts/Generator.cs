@@ -36,7 +36,7 @@ public class Generator : MonoBehaviour
         //CreateCentre(CentreShape.SQUARE, 3f);
     }
 
-    void CreateCentre(CentreShape shape = CentreShape.SQUARE, float pref = 3, int angles = 0)
+    public void CreateCentre(CentreShape shape = CentreShape.SQUARE, float pref = 0.7f, int angles = 0)
     {
         switch(shape)
         {
@@ -44,10 +44,10 @@ public class Generator : MonoBehaviour
                 TriangleCentre();
                 break;
             case CentreShape.SQUARE:
-                SquareCentre(pref);
+                SquareCentre();
                 break;
             case CentreShape.TETRA:
-                TetraCentre(pref);
+                TetraCentre();
                 break;
             case CentreShape.ROUND:
                 RoundCentre(angles, pref);
@@ -57,17 +57,52 @@ public class Generator : MonoBehaviour
 
     void TriangleCentre()
     {
-        for (int i = 0; i < 3; i++)
+        Point pt1 = SpawnAnyPoint(new Vector2(0, 0), upper_range);
+        points.Add(pt1);
+        centre.Add(pt1);
+        outsidePoints.Add(pt1);
+
+        for (int i = 0; i < 2; i++)
         {
-            Point point = SpawnAnyPoint(new Vector2(0, 0), 3.0f);
-            points.Add(point);
-            centre.Add(point);
-            outsidePoints.Add(point);
+            Vector2 dir = Random.insideUnitCircle.normalized * Random.Range(lower_range, upper_range);
+            Point pt = SpawnPoint(centre[i].transform.position.x + dir.x, centre[i].transform.position.y + dir.y);
+            points.Add(pt);
+            centre.Add(pt);
+            outsidePoints.Add(pt);
         }
 
         ConnectPoints(points[0], points[1]);
         ConnectPoints(points[1], points[2]);
         ConnectPoints(points[2], points[0]);
+    }
+
+    void TetraCentre()
+    {
+        float pos1x = Random.Range(lower_range, upper_range)/2;
+        float pos1y = Random.Range(lower_range, upper_range)/2;
+
+        Point pt1 = SpawnPoint(0, 0);
+        Point pt2 = SpawnPoint(-pos1x, -pos1y + Random.Range(lower_range, upper_range));
+        Point pt3 = SpawnPoint(pt2.transform.position.x + Random.Range(lower_range, upper_range), pt2.transform.position.y);
+        Point pt4 = SpawnPoint(pt3.transform.position.x, pt3.transform.position.y - Random.Range(lower_range, upper_range));
+        
+        centre.Add(pt1);
+        centre.Add(pt2);
+        centre.Add(pt3);
+        centre.Add(pt4);
+
+        for (int i = 0; i < 4; i++)
+        {
+            points.Add(centre[i]);
+            outsidePoints.Add(centre[i]);
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            ConnectPoints(centre[i], centre[i + 1]);
+        }
+
+        ConnectPoints(centre[3], centre[0]);
     }
 
     void TetraCentre(float squarePreference)
@@ -101,10 +136,11 @@ public class Generator : MonoBehaviour
         ConnectPoints(centre[3], centre[0]);
     }
 
-    void SquareCentre(float length)
+    void SquareCentre()
     {
+        float length = Random.Range(lower_range, upper_range);
         float pos = length / 2;
-        centre.Add(SpawnPoint(-pos, -pos));
+        centre.Add(SpawnPoint(-length/2, -length/2));
         centre.Add(SpawnPoint(-pos, pos));
         centre.Add(SpawnPoint(pos, pos));
         centre.Add(SpawnPoint(pos, -pos));
@@ -537,12 +573,16 @@ public class Generator : MonoBehaviour
         float x = (point1.transform.position.x + point2.transform.position.x) / 2;
         float y = (point1.transform.position.y + point2.transform.position.y) / 2;
         Vector2 directionVector = point1.transform.position - point2.transform.position;
+        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, directionVector);
+        rotation.x = 0;
 
-        Road connect = (Road)Instantiate(road, new Vector3(x, y, 0), Quaternion.FromToRotation(Vector3.up, directionVector));
+        Road connect = (Road)Instantiate(road, new Vector3(x, y, 0), rotation);
         connect.transform.localScale = Vector3.Scale(connect.transform.localScale, new Vector3(1, directionVector.magnitude, 1));
 
         connect.point1 = point1;
         connect.point2 = point2;
+
+        connect.SetTiling();
 
         return connect;
     }
@@ -699,7 +739,7 @@ public class Generator : MonoBehaviour
         CreateCentre();
     }
 
-    enum CentreShape
+    public enum CentreShape
     {
         TRIANGLE, TETRA, ROUND, SQUARE
     }
