@@ -12,7 +12,7 @@ public class BuildingGenerator : MonoBehaviour
 
     public Building building;
 
-    bool roadsDone = false;
+    bool generating = false;
     int roadsNumber = 0;
     int roadCounter = 0;
 
@@ -20,14 +20,14 @@ public class BuildingGenerator : MonoBehaviour
     {
         this.generator = generator;
         roads = generator.roads;
-        roadsDone = true;  // no generating
+        generating = true;  // no generating
         roadsNumber = roads.Count;
         roadCounter = 0;
     }
 
     private void Update()
     {
-        if (roadsDone && roadCounter < roadsNumber)
+        if (generating && roadCounter < roadsNumber)
         {
             SpawnAlongRoad(roads[roadCounter], 0.4f);
             roadCounter++;
@@ -87,7 +87,12 @@ public class BuildingGenerator : MonoBehaviour
             Destroy(bd.gameObject);
         }
         buildings.Clear();
-        roadsDone = false;
+        generating = false;
         
+    }
+
+    public bool IsGenerating()
+    {
+        return generating;
     }
 }

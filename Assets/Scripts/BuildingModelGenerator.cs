@@ -23,7 +23,8 @@ public class BuildingModelGenerator : MonoBehaviour
     public Building CreateBuilding(Vector3 basicPosition, Quaternion basicRotation)
     {
         // number of segments on the ground floor
-        int segmentNumber = Random.Range(1, 5);
+        int segmentNumber = 7;
+        //int segmentNumber = Random.Range(1, 5);
         List<GameObject> groundFloor = new List<GameObject>();
         List<GameObject> allSegments = new List<GameObject>();
 
@@ -39,6 +40,8 @@ public class BuildingModelGenerator : MonoBehaviour
             {
                 model = fourSideModel;
             }
+
+            model = fourSideModel;
 
             if (groundFloor.Count == 0)
             {
@@ -64,8 +67,16 @@ public class BuildingModelGenerator : MonoBehaviour
                 {
                     // offseting other segments
 
+                    /*int side = Random.Range(0, 3);
+
+                    float distance = 0.2f;
+                    //fixing_rotation = new Vector3(-90, 0, 0);
+                    Vector3 vector_rotation = new Vector3(0, 0, -90 * side);
+                    offset = Quaternion.Euler(vector_rotation) * Vector3.right * distance;
+                    */
+
                     int side = Random.Range(0, 3);
-                    //Quaternion rotation = Quaternion.Euler(0, 0, 90 * side);
+                    Quaternion rotation = Quaternion.Euler(0, 0, 90 * side);
                     
 
                     switch (side)
@@ -101,7 +112,6 @@ public class BuildingModelGenerator : MonoBehaviour
                     continue;
                 }
 
-                    // fix rotation
                 GameObject segment = Instantiate(model, neighbor.transform.position, neighbor.transform.rotation);
                 segment.transform.Translate(offset);
                 segment.transform.Rotate(fixing_rotation);

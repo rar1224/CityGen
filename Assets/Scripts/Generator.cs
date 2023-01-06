@@ -9,7 +9,6 @@ public class Generator : MonoBehaviour
 {
     public Road road;
     public Point point;
-    public BuildingGenerator bdGenerator;
 
     public float contPreference;
     public float perpPreference;
@@ -36,7 +35,7 @@ public class Generator : MonoBehaviour
         //CreateCentre(CentreShape.SQUARE, 3f);
     }
 
-    public void CreateCentre(CentreShape shape = CentreShape.SQUARE, float pref = 0.7f, int angles = 0)
+    public void CreateCentre(CentreShape shape = CentreShape.LINE, float width = 20f, float height = 20f, float lineSmoothness = 0.8f)
     {
         switch(shape)
         {
@@ -49,8 +48,8 @@ public class Generator : MonoBehaviour
             case CentreShape.TETRA:
                 TetraCentre();
                 break;
-            case CentreShape.ROUND:
-                RoundCentre(angles, pref);
+            case CentreShape.LINE:
+                LineCentre(width, height, lineSmoothness);
                 break;
         }
     }
@@ -105,37 +104,6 @@ public class Generator : MonoBehaviour
         ConnectPoints(centre[3], centre[0]);
     }
 
-    void TetraCentre(float squarePreference)
-    {
-        squarePreference += 1;
-        float scale = Random.Range(0.3f, 1.0f);
-        
-        centre.Add(SpawnPoint(Random.Range(-2f, -1f * squarePreference) * scale,
-                            Random.Range(1f * squarePreference, 2f) * scale));
-
-        centre.Add(SpawnPoint(Random.Range(1f * squarePreference, 2f) * scale,
-                            Random.Range(1f * squarePreference, 2f) * scale));
-
-        centre.Add(SpawnPoint(Random.Range(1f * squarePreference, 2f) * scale,
-                            Random.Range(-2f, -1f * squarePreference) * scale));
-
-        centre.Add(SpawnPoint(Random.Range(-2f, -1f * squarePreference) * scale,
-                            Random.Range(-2f, -1f * squarePreference) * scale));
-
-        for (int i = 0; i < 4; i++)
-        {
-            points.Add(centre[i]);
-            outsidePoints.Add(centre[i]);
-        }
-
-        for (int i = 0; i < 3; i++)
-        {
-            ConnectPoints(centre[i], centre[i + 1]);
-        }
-
-        ConnectPoints(centre[3], centre[0]);
-    }
-
     void SquareCentre()
     {
         float length = Random.Range(lower_range, upper_range);
@@ -159,9 +127,59 @@ public class Generator : MonoBehaviour
         ConnectPoints(centre[3], centre[0]);
     }
 
-    void RoundCentre(int angles, float regularPreference)
+    void LineCentre(float width, float height, float lineSmoothness)
     {
+        Point begin;
+        Point end;
+        int pointsBetween = Random.Range(2, 7);
+        lineSmoothness = 1 - lineSmoothness;
 
+        if (Random.Range(0, 2) == 0)
+        {
+            // vertical line
+
+            begin = SpawnPoint(Random.Range(-width * lineSmoothness / 2, width * lineSmoothness / 2), height/2);
+            end = SpawnPoint(Random.Range(-width * lineSmoothness / 2, width * lineSmoothness / 2), -height / 2);
+
+            float distance = height / (pointsBetween + 1);
+
+            centre.Add(begin);
+            
+            for (int i = 0; i < pointsBetween; i++)
+            {
+                centre.Add(SpawnPoint(Random.Range(-width * lineSmoothness / 2, width * lineSmoothness / 2), height / 2 - (i + 1) * distance));
+            }
+
+            centre.Add(end);
+        } else
+        {
+            // horizontal line 
+
+            begin = SpawnPoint(width/2, Random.Range(-height * lineSmoothness / 4, height * lineSmoothness / 4));
+            end = SpawnPoint(-width / 2, Random.Range(-height * lineSmoothness / 4, height * lineSmoothness / 4));
+
+            float distance = width / (pointsBetween + 1);
+
+            centre.Add(begin);
+
+            for (int i = 0; i < pointsBetween; i++)
+            {
+                centre.Add(SpawnPoint(width / 2 - (i + 1) * distance, Random.Range(-height * lineSmoothness / 4, height * lineSmoothness / 4)));
+            }
+
+            centre.Add(end);
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            points.Add(centre[i]);
+            outsidePoints.Add(centre[i]);
+        }
+
+        for (int i = 0; i < centre.Count - 1; i++)
+        {
+            ConnectPoints(centre[i], centre[i + 1]);
+        }
     }
 
     // Update is called once per frame
@@ -171,7 +189,7 @@ public class Generator : MonoBehaviour
         {
             if (counter == iterations)
             {
-                bdGenerator.Initialize(this);
+                //bdGenerator.Initialize(this);
                 counter++;
                 generating = false;
                 return;
@@ -709,7 +727,7 @@ public class Generator : MonoBehaviour
 
     public void RemoveModel()
     {
-        bdGenerator.RemoveBuildings();
+        //bdGenerator.RemoveBuildings();
         outsidePoints.Clear();
         centre.Clear();
 
@@ -739,8 +757,14 @@ public class Generator : MonoBehaviour
         CreateCentre();
     }
 
+    public void Continue()
+    {
+        counter = 0;
+        generating = true;
+    }
+
     public enum CentreShape
     {
-        TRIANGLE, TETRA, ROUND, SQUARE
+        TRIANGLE, TETRA, LINE, SQUARE
     }
 }
