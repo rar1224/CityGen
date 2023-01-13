@@ -19,8 +19,12 @@ public class Generator : MonoBehaviour
     public int iterations;
     public float roadColliderRadius;
 
+    public CentreShape shape = CentreShape.SQUARE;
+
     private int counter = 0;
     private bool generating = false;
+
+    public GameObject model;
 
     private List<Point> points = new List<Point>();
     private List<Point> centre = new List<Point>();
@@ -35,7 +39,7 @@ public class Generator : MonoBehaviour
         //CreateCentre(CentreShape.SQUARE, 3f);
     }
 
-    public void CreateCentre(CentreShape shape = CentreShape.LINE, float width = 20f, float height = 20f, float lineSmoothness = 0.8f)
+    public void CreateCentre(CentreShape shape, float width = 20f, float height = 20f, float lineSmoothness = 0.8f)
     {
         switch(shape)
         {
@@ -357,7 +361,7 @@ public class Generator : MonoBehaviour
 
     Point SpawnPoint(float x, float y)
     {
-        Point pt = (Point)Instantiate(point, new Vector3(x, y, 0), Quaternion.identity);
+        Point pt = (Point)Instantiate(point, new Vector3(x, y, -0.02f), Quaternion.identity);
         return pt;
     }
 
@@ -594,7 +598,8 @@ public class Generator : MonoBehaviour
         Quaternion rotation = Quaternion.FromToRotation(Vector3.up, directionVector);
         rotation.x = 0;
 
-        Road connect = (Road)Instantiate(road, new Vector3(x, y, 0), rotation);
+        Road connect = (Road)Instantiate(road, new Vector3(x, y, -0.02f), rotation);
+        connect.transform.parent = model.transform;
         connect.transform.localScale = Vector3.Scale(connect.transform.localScale, new Vector3(1, directionVector.magnitude, 1));
 
         connect.point1 = point1;
@@ -754,7 +759,7 @@ public class Generator : MonoBehaviour
     {
         counter = 0;
         generating = true;
-        CreateCentre();
+        CreateCentre(shape);
     }
 
     public void Continue()

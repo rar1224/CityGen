@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
+using UnityEditor.Formats.Fbx.Exporter;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,6 +24,7 @@ public class UIController : MonoBehaviour
     public Button regenerateButton;
     public Button buildingsButton;
     public Button removeButton;
+    public Button exportButton;
 
     public Slider contSlider;
     public Slider perpSlider;
@@ -30,7 +33,11 @@ public class UIController : MonoBehaviour
     public GameObject upperRangeInput;
     public GameObject iterationsInput;
 
+    public GameObject startShapeInput;
+    private TMP_Dropdown startShapeDropdown;
+
     public GameObject centre;
+    public GameObject model;
 
     void Awake()
     {
@@ -44,6 +51,11 @@ public class UIController : MonoBehaviour
 
         Button btn3 = removeButton.GetComponent<Button>();
         btn3.onClick.AddListener(RemoveModel);
+
+        Button btn4 = exportButton.GetComponent<Button>();
+        btn4.onClick.AddListener(ExportFbx);
+
+        startShapeDropdown = startShapeInput.GetComponent<TMP_Dropdown>();
     }
 
     // Update is called once per frame
@@ -77,16 +89,42 @@ public class UIController : MonoBehaviour
 
     void Regenerate()
     {
-        //generator.bdGenerator.modelGenerator.CreateBuilding(new Vector3(0, 0, 0), Quaternion.identity);
+        if (generator.roads.Count == 0)
+        {
+            string shape = startShapeDropdown.options[startShapeDropdown.value].text;
+            startShapeDropdown.interactable = false;
 
+            switch(shape)
+            {
+                case "Square":
+                    generator.shape = Generator.CentreShape.SQUARE;
+                    break;
+                case "Trapezoid":
+                    generator.shape = Generator.CentreShape.TETRA;
+                    break;
+                case "Triangle":
+                    generator.shape = Generator.CentreShape.TRIANGLE;
+                    break;
+                case "Line":
+                    generator.shape = Generator.CentreShape.LINE;
+                    break;
+            }
+        }
+
+        
+
+        //bdGenerator.modelGenerator.CreateBuilding(new Vector3(0, 0, 0), Quaternion.identity);
+
+        
         GetParameters();
         generator.RestartParameters(contPreference, perpPreference, lower_range, upper_range, iterations, roadColliderRadius);
         if (generator.roads.Count == 0)
         {
-            generator.CreateCentre(Generator.CentreShape.SQUARE);
+            generator.CreateCentre(generator.shape);
         }
 
         generator.Continue();
+        
         
     }
 
@@ -97,10 +135,21 @@ public class UIController : MonoBehaviour
 
     void RemoveModel()
     {
+        startShapeDropdown.interactable = true;
         generator.RemoveModel();
         bdGenerator.RemoveBuildings();
     }
 
+    void ExportFbx()
+    {
+        List<UnityEngine.Object> objectList = new List<UnityEngine.Object>();
 
+        foreach (Transform tr in model.transform)
+        {
+            objectList.Add(tr.gameObject);
+        }
 
+        string filePath = Path.Combine(Application.dataPath, "City.fbx");
+        ModelExporter.ExportObjects(filePath, objectList.ToArray());
+    }
 }

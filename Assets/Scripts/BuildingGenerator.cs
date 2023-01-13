@@ -6,6 +6,7 @@ public class BuildingGenerator : MonoBehaviour
 {
     public Generator generator;
     public BuildingModelGenerator modelGenerator;
+    public GameObject model;
 
     private List<Road> roads;
     private List<Building> buildings = new List<Building>();
@@ -31,6 +32,9 @@ public class BuildingGenerator : MonoBehaviour
         {
             SpawnAlongRoad(roads[roadCounter], 0.4f);
             roadCounter++;
+        } else if (roadCounter == roadsNumber)
+        {
+            generating = false;
         }
     }
 
@@ -50,11 +54,13 @@ public class BuildingGenerator : MonoBehaviour
             if (IsPositionValid(position1))
             {
                 Building bd = modelGenerator.CreateBuilding(position1, road.transform.rotation);
+                bd.transform.parent = model.transform;
                 buildings.Add(bd);
             }
             if (IsPositionValid(position2))
             {
                 Building bd = modelGenerator.CreateBuilding(position2, road.transform.rotation);
+                bd.transform.parent = model.transform;
                 buildings.Add(bd);
             }
         }

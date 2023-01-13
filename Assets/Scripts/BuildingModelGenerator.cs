@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,14 +16,14 @@ public class BuildingModelGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public Building CreateBuilding(Vector3 basicPosition, Quaternion basicRotation)
     {
         // number of segments on the ground floor
-        int segmentNumber = 7;
-        //int segmentNumber = Random.Range(1, 5);
+        int segmentNumber = Random.Range(1, 5);
+        //int segmentNumber = 7;
         List<GameObject> groundFloor = new List<GameObject>();
         List<GameObject> allSegments = new List<GameObject>();
 
@@ -33,97 +32,93 @@ public class BuildingModelGenerator : MonoBehaviour
         {
             GameObject model;
 
-            if (Random.Range(0f, 1f) > 0.5)
+            if (Random.Range(0.0f, 1.0f) > 0.9)
             {
                 model = fiveSideModel;
-            } else
+            }
+            else
             {
                 model = fourSideModel;
             }
 
-            model = fourSideModel;
-
             if (groundFloor.Count == 0)
             {
+
                 GameObject segment;
 
-                if (model == fourSideModel) {
-                    Quaternion rotation = Quaternion.Euler(-90, 0, 0);
-                    segment = Instantiate(model, basicPosition, basicRotation * rotation);
-                } else
-                {
-                    segment = Instantiate(model, basicPosition, basicRotation);
-                }
-
+                if (model.tag == "FiveSideModel") segment = Instantiate(model, new Vector3(basicPosition.x, basicPosition.y, -0.2f), basicRotation);
+                else segment = Instantiate(model, new Vector3(basicPosition.x, basicPosition.y, -0.1f), basicRotation);
                 groundFloor.Add(segment);
                 allSegments.Add(segment);
-            } else
+
+            }
+            else
             {
+
                 GameObject neighbor = groundFloor[Random.Range(0, groundFloor.Count)];
                 Vector3 offset = Vector3.zero;
                 Vector3 fixing_rotation = Vector3.zero;
 
-                if (model.tag == "FourSideModel")
+                float modelDistance;
+                if (model.tag == "FourSideModel") modelDistance = 0.1f;
+                else modelDistance = 0.1f / Mathf.Tan((Mathf.PI / 180) * 36);
+
+                if (neighbor.tag == "FourSideModel")
                 {
                     // offseting other segments
 
-                    /*int side = Random.Range(0, 3);
+                    int side = Random.Range(0, 3);
 
-                    float distance = 0.2f;
-                    //fixing_rotation = new Vector3(-90, 0, 0);
+                    float distance = 0.1f + modelDistance;
+                    if (model.tag == "FiveSideModel") fixing_rotation = new Vector3(0, 0, -36 - 90 * side); // one square, one pentagon
+                    else fixing_rotation = new Vector3(0, 0, -90);                                               // two squares
+
                     Vector3 vector_rotation = new Vector3(0, 0, -90 * side);
                     offset = Quaternion.Euler(vector_rotation) * Vector3.right * distance;
-                    */
-
-                    int side = Random.Range(0, 3);
-                    Quaternion rotation = Quaternion.Euler(0, 0, 90 * side);
-                    
-
-                    switch (side)
-                    {
-                        case 0:
-                            offset = new Vector3(0, -0.2f, 0);
-                            break;
-                        case 1:
-                            offset = new Vector3(-0.2f, 0, 0);
-                            break;
-                        case 2:
-                            offset = new Vector3(0, 0.2f, 0);
-                            break;
-                        case 3:
-                            offset = new Vector3(0.2f, 0, 0);
-                            break;
-                    }
-                } else
+                }
+                else
                 {
                     // offsetting pentagon
 
                     int side = Random.Range(0, 4);
 
-                    float distance = 0.2f / Mathf.Tan((Mathf.PI / 180) * 36);
-                    fixing_rotation = new Vector3(0, 0, -36);
+                    float distance = 0.1f / Mathf.Tan((Mathf.PI / 180) * 36) + modelDistance;
+                    if (model.tag == "FiveSideModel") fixing_rotation = new Vector3(0, 0, -36); // two pentagons
+                    else fixing_rotation = new Vector3(0, 0, side * -72);                       // one pentagon, one square
+
                     Vector3 vector_rotation = new Vector3(0, 0, -72 * side);
                     offset = Quaternion.Euler(vector_rotation) * Vector3.right * distance;
-                }
-               
-
-                if (Physics.Raycast(neighbor.transform.position, offset, 0.3f))
-                {
-                    continue;
                 }
 
                 GameObject segment = Instantiate(model, neighbor.transform.position, neighbor.transform.rotation);
                 segment.transform.Translate(offset);
                 segment.transform.Rotate(fixing_rotation);
+
+
+
+                if (model.tag == "FourSideModel") segment.transform.position = new Vector3(segment.transform.position.x, segment.transform.position.y, -0.1f);
+                else segment.transform.position = new Vector3(segment.transform.position.x, segment.transform.position.y, -0.2f);
+
+                
+                foreach (GameObject sg in groundFloor)
+                {
+                    if ((segment.transform.localPosition - neighbor.transform.localPosition).magnitude < 0.1f)
+                    {
+                        Destroy(segment);
+                        continue;
+                    }
+                }
+                
+
                 groundFloor.Add(segment);
                 allSegments.Add(segment);
             }
         }
 
-        
-        // height of segments
 
-        /*
+        // height of segments
+        
+        
         foreach (GameObject groundSegment in groundFloor) {
             int height = Random.Range(1, 4);
 
@@ -133,12 +128,12 @@ public class BuildingModelGenerator : MonoBehaviour
                 allSegments.Add(newFloor);
             }
         }
-        */
+        
         
 
-        Building currentBuilding = (Building) Instantiate(building, basicPosition, basicRotation);
+        Building currentBuilding = (Building)Instantiate(building, basicPosition, basicRotation);
 
-        foreach(GameObject segment in allSegments)
+        foreach (GameObject segment in allSegments)
         {
             segment.transform.parent = currentBuilding.transform;
         }
