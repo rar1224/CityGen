@@ -115,6 +115,7 @@ public class UIController : MonoBehaviour
 
         //bdGenerator.modelGenerator.CreateBuilding(new Vector3(0, 0, 0), Quaternion.identity);
 
+
         
         GetParameters();
         generator.RestartParameters(contPreference, perpPreference, lower_range, upper_range, iterations, roadColliderRadius);
@@ -124,7 +125,7 @@ public class UIController : MonoBehaviour
         }
 
         generator.Continue();
-        
+
         
     }
 

@@ -32,6 +32,7 @@ public class BuildingModelGenerator : MonoBehaviour
         {
             GameObject model;
 
+
             if (Random.Range(0.0f, 1.0f) > 0.9)
             {
                 model = fiveSideModel;
@@ -90,14 +91,39 @@ public class BuildingModelGenerator : MonoBehaviour
                     offset = Quaternion.Euler(vector_rotation) * Vector3.right * distance;
                 }
 
+                Vector3 groundLevel = neighbor.transform.localPosition;
+                groundLevel.z = 0f;
+                Vector3 turnedOffset = offset;
+                turnedOffset = basicRotation * turnedOffset;
+
+
+
                 GameObject segment = Instantiate(model, neighbor.transform.position, neighbor.transform.rotation);
                 segment.transform.Translate(offset);
                 segment.transform.Rotate(fixing_rotation);
 
+                Ray ray = new Ray(groundLevel, turnedOffset);
+                RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
+                Debug.DrawRay(groundLevel, turnedOffset, Color.green, 200);
 
+                bool collides = false;
+
+                foreach (RaycastHit hit in hits)
+                {
+                    if (hit.collider.gameObject.tag == "Road")
+                    {
+                        Destroy(segment);
+                        collides = true;
+                        continue;
+                    }
+                }
+
+                if (collides) continue;
 
                 if (model.tag == "FourSideModel") segment.transform.position = new Vector3(segment.transform.position.x, segment.transform.position.y, -0.1f);
                 else segment.transform.position = new Vector3(segment.transform.position.x, segment.transform.position.y, -0.2f);
+
+
 
                 
                 foreach (GameObject sg in groundFloor)
@@ -128,8 +154,8 @@ public class BuildingModelGenerator : MonoBehaviour
                 allSegments.Add(newFloor);
             }
         }
-        
-        
+
+
 
         Building currentBuilding = (Building)Instantiate(building, basicPosition, basicRotation);
 
