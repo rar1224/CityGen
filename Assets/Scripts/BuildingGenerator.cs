@@ -16,6 +16,7 @@ public class BuildingGenerator : MonoBehaviour
     bool generating = false;
     int roadsNumber = 0;
     int roadCounter = 0;
+    
 
     public void Initialize(Generator generator)
     {
@@ -30,7 +31,7 @@ public class BuildingGenerator : MonoBehaviour
     {
         if (generating && roadCounter < roadsNumber)
         {
-            SpawnAlongRoad(roads[roadCounter], 0.4f);
+            SpawnAlongRoad(roads[roadCounter], 0.05f, 0.5f);
             roadCounter++;
         } else if (roadCounter == roadsNumber)
         {
@@ -38,33 +39,35 @@ public class BuildingGenerator : MonoBehaviour
         }
     }
 
-    void SpawnAlongRoad(Road road, float distance)
+    void SpawnAlongRoad(Road road, float averageDistance, float roadOffset)
     {
         float magnitude = road.GetDirection().magnitude;
-        int bdNumber = (int)(magnitude / distance);
+        int bdNumber = (int)(magnitude / averageDistance);
 
         Vector2 offset = Vector2.Perpendicular(road.GetDirection().normalized);
-        offset = offset * 0.7f;
+        offset *= roadOffset;
 
+        float[] positions = new float[bdNumber];
+
+        SpawnOneSide(bdNumber, offset, road, magnitude);
+        SpawnOneSide(bdNumber, -offset, road, magnitude);
+
+    }
+
+    void SpawnOneSide(int bdNumber, Vector2 offset, Road rd, float magnitude)
+    {
         for (int i = 0; i < bdNumber; i++)
         {
-            Vector3 position = road.point1.transform.position + (Vector3) road.GetDirection().normalized * distance * (i+1);
+            Vector3 position = rd.point1.transform.position + (Vector3)rd.GetDirection().normalized * Random.Range(0.0f, 1.0f) * magnitude;
             Vector3 position1 = position + new Vector3(offset.x, offset.y, 0);
-            Vector3 position2 = position + new Vector3(-offset.x, -offset.y, 0);
+
             if (IsPositionValid(position1))
             {
-                Building bd = modelGenerator.CreateBuilding(position1, road.transform.rotation);
-                bd.transform.parent = model.transform;
-                buildings.Add(bd);
-            }
-            if (IsPositionValid(position2))
-            {
-                Building bd = modelGenerator.CreateBuilding(position2, road.transform.rotation);
+                Building bd = modelGenerator.CreateBuilding(position1, rd.transform.rotation);
                 bd.transform.parent = model.transform;
                 buildings.Add(bd);
             }
         }
-
     }
 
     bool IsPositionValid(Vector3 position)
@@ -100,5 +103,10 @@ public class BuildingGenerator : MonoBehaviour
     public bool IsGenerating()
     {
         return generating;
+    }
+
+    public void SetBdHeight(int bdHeight)
+    {
+        modelGenerator.SetBdHeight(bdHeight);
     }
 }

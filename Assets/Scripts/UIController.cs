@@ -14,12 +14,14 @@ public class UIController : MonoBehaviour
 
     public float contPreference;
     public float perpPreference;
+    public float connectPreference;
 
     public float lower_range;
     public float upper_range;
 
     public int iterations;
     public float roadColliderRadius;
+    public int bdHeight;
 
     public Button regenerateButton;
     public Button buildingsButton;
@@ -28,10 +30,12 @@ public class UIController : MonoBehaviour
 
     public Slider contSlider;
     public Slider perpSlider;
+    public Slider connectSlider;
 
     public GameObject lowerRangeInput;
     public GameObject upperRangeInput;
     public GameObject iterationsInput;
+    public GameObject bdHeightInput;
 
     public GameObject startShapeInput;
     private TMP_Dropdown startShapeDropdown;
@@ -42,7 +46,7 @@ public class UIController : MonoBehaviour
     void Awake()
     {
         GetParameters();
-        generator.RestartParameters(contPreference, perpPreference, lower_range, upper_range, iterations, roadColliderRadius);
+        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations, roadColliderRadius);
         Button btn = regenerateButton.GetComponent<Button>();
         btn.onClick.AddListener(Regenerate);
 
@@ -82,9 +86,11 @@ public class UIController : MonoBehaviour
     {
         contPreference = contSlider.value;
         perpPreference = perpSlider.value;
+        connectPreference = connectSlider.value;
         lower_range = float.Parse(lowerRangeInput.GetComponent<TMP_InputField>().text);
         upper_range = float.Parse(upperRangeInput.GetComponent<TMP_InputField>().text);
         iterations = int.Parse(iterationsInput.GetComponent<TMP_InputField>().text);
+        bdHeight = int.Parse(bdHeightInput.GetComponent<TMP_InputField>().text);
     }
 
     void Regenerate()
@@ -118,7 +124,9 @@ public class UIController : MonoBehaviour
 
         
         GetParameters();
-        generator.RestartParameters(contPreference, perpPreference, lower_range, upper_range, iterations, roadColliderRadius);
+        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations, roadColliderRadius);
+        bdGenerator.SetBdHeight(bdHeight);
+
         if (generator.roads.Count == 0)
         {
             generator.CreateCentre(generator.shape);

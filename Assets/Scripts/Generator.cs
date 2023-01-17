@@ -12,6 +12,7 @@ public class Generator : MonoBehaviour
 
     public float contPreference;
     public float perpPreference;
+    public float connectPreference;
 
     public float lower_range;
     public float upper_range;
@@ -202,13 +203,30 @@ public class Generator : MonoBehaviour
 
             if (outsidePoints.Count > 0)
             {
-                int index = Random.Range(0, outsidePoints.Count);
+                // try connecting
 
-                foreach (Point outp in outsidePoints)
-                {
-                    TryConnect(outp, contPreference, perpPreference);
+                int ptsForConnecting = (int) (outsidePoints.Count * connectPreference);
+
+                List<int> indices = new List<int>();
+                for (int i = 0; i < ptsForConnecting; i++) {
+                    int ind = Random.Range(0, outsidePoints.Count);
+                    if (indices.Contains(ind))
+                    {
+                        i--;
+                    } else
+                    {
+                        indices.Add(ind);
+                    }
                 }
 
+                foreach(int j in indices)
+                {
+                    TryConnect(outsidePoints[j], contPreference, perpPreference);
+                }
+
+                // try making new points
+
+                int index = Random.Range(0, outsidePoints.Count);
                 Point pt = SpawnAndConnect(outsidePoints[index], contPreference, perpPreference);
                 if (pt)
                 {
@@ -718,11 +736,12 @@ public class Generator : MonoBehaviour
         return true;
     }
 
-    public void RestartParameters(float contPreference, float perpPreference, float lower_range, float upper_range, int iterations,
+    public void RestartParameters(float contPreference, float perpPreference, float connectPreference, float lower_range, float upper_range, int iterations,
         float roadColliderRadius)
     {
         this.contPreference = contPreference;
         this.perpPreference = perpPreference;
+        this.connectPreference = connectPreference;
         this.lower_range = lower_range;
         this.upper_range = upper_range;
         this.iterations = iterations;

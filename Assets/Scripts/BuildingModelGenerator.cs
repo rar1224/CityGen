@@ -7,6 +7,8 @@ public class BuildingModelGenerator : MonoBehaviour
     public GameObject fiveSideModel;
     public Building building;
 
+    private int bdHeight = 7;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -19,10 +21,15 @@ public class BuildingModelGenerator : MonoBehaviour
 
     }
 
+    public void SetBdHeight(int bdHeight)
+    {
+        this.bdHeight = bdHeight;
+    }
+
     public Building CreateBuilding(Vector3 basicPosition, Quaternion basicRotation)
     {
         // number of segments on the ground floor
-        int segmentNumber = Random.Range(1, 5);
+        int segmentNumber = Random.Range(1, 7);
         //int segmentNumber = 7;
         List<GameObject> groundFloor = new List<GameObject>();
         List<GameObject> allSegments = new List<GameObject>();
@@ -104,7 +111,7 @@ public class BuildingModelGenerator : MonoBehaviour
 
                 Ray ray = new Ray(groundLevel, turnedOffset);
                 RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
-                Debug.DrawRay(groundLevel, turnedOffset, Color.green, 200);
+                //Debug.DrawRay(groundLevel, turnedOffset, Color.green, 200);
 
                 bool collides = false;
 
@@ -146,7 +153,7 @@ public class BuildingModelGenerator : MonoBehaviour
         
         
         foreach (GameObject groundSegment in groundFloor) {
-            int height = Random.Range(1, 4);
+            int height = Random.Range(0, bdHeight);
 
             for (int i = 0; i < height; i++)
             {
