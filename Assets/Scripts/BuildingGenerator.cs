@@ -4,24 +4,19 @@ using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
 {
-    public Generator generator;
     public BuildingModelGenerator modelGenerator;
     public GameObject model;
 
     private List<Road> roads;
-    private List<Building> buildings = new List<Building>();
-
-    public Building building;
+    private List<GameObject> buildings = new List<GameObject>();
 
     bool generating = false;
     int roadsNumber = 0;
     int roadCounter = 0;
-    
 
-    public void Initialize(Generator generator)
+    public void Initialize(List<Road> roads)
     {
-        this.generator = generator;
-        roads = generator.roads;
+        this.roads = roads;
         generating = true;  // no generating
         roadsNumber = roads.Count;
         roadCounter = 0;
@@ -47,8 +42,6 @@ public class BuildingGenerator : MonoBehaviour
         Vector2 offset = Vector2.Perpendicular(road.GetDirection().normalized);
         offset *= roadOffset;
 
-        float[] positions = new float[bdNumber];
-
         SpawnOneSide(bdNumber, offset, road, magnitude);
         SpawnOneSide(bdNumber, -offset, road, magnitude);
 
@@ -63,7 +56,7 @@ public class BuildingGenerator : MonoBehaviour
 
             if (IsPositionValid(position1))
             {
-                Building bd = modelGenerator.CreateBuilding(position1, rd.transform.rotation);
+                GameObject bd = modelGenerator.CreateBuilding(position1, rd.transform.rotation);
                 bd.transform.parent = model.transform;
                 buildings.Add(bd);
             }
@@ -87,13 +80,13 @@ public class BuildingGenerator : MonoBehaviour
 
     public void RemoveBuildings()
     {
-        foreach (Building bd in buildings)
+        foreach (GameObject bd in buildings)
         {
             foreach (Transform child in bd.transform)
             {
                 Destroy(child.gameObject);
             }
-            Destroy(bd.gameObject);
+            Destroy(bd);
         }
         buildings.Clear();
         generating = false;

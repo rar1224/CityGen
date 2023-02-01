@@ -20,7 +20,6 @@ public class UIController : MonoBehaviour
     public float upper_range;
 
     public int iterations;
-    public float roadColliderRadius;
     public int bdHeight;
 
     public Button regenerateButton;
@@ -46,7 +45,7 @@ public class UIController : MonoBehaviour
     void Awake()
     {
         GetParameters();
-        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations, roadColliderRadius);
+        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations);
         Button btn = regenerateButton.GetComponent<Button>();
         btn.onClick.AddListener(Regenerate);
 
@@ -105,8 +104,8 @@ public class UIController : MonoBehaviour
                 case "Square":
                     generator.shape = Generator.CentreShape.SQUARE;
                     break;
-                case "Trapezoid":
-                    generator.shape = Generator.CentreShape.TETRA;
+                case "Tetragon":
+                    generator.shape = Generator.CentreShape.TETRAGON;
                     break;
                 case "Triangle":
                     generator.shape = Generator.CentreShape.TRIANGLE;
@@ -116,15 +115,9 @@ public class UIController : MonoBehaviour
                     break;
             }
         }
-
-        
-
-        //bdGenerator.modelGenerator.CreateBuilding(new Vector3(0, 0, 0), Quaternion.identity);
-
-
         
         GetParameters();
-        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations, roadColliderRadius);
+        generator.RestartParameters(contPreference, perpPreference, connectPreference, lower_range, upper_range, iterations);
         bdGenerator.SetBdHeight(bdHeight);
 
         if (generator.roads.Count == 0)
@@ -139,7 +132,7 @@ public class UIController : MonoBehaviour
 
     void GenerateBuildings()
     {
-        bdGenerator.Initialize(generator);
+        bdGenerator.Initialize(generator.roads);
     }
 
     void RemoveModel()
@@ -161,4 +154,5 @@ public class UIController : MonoBehaviour
         string filePath = Path.Combine(Application.dataPath, "City.fbx");
         ModelExporter.ExportObjects(filePath, objectList.ToArray());
     }
+
 }

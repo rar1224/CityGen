@@ -61,7 +61,6 @@
     <Compile Include="Assets\Scripts\Generator.cs" />
     <Compile Include="Assets\Scripts\BuildingModelGenerator.cs" />
     <Compile Include="Assets\Scripts\BuildingGenerator.cs" />
-    <Compile Include="Assets\Scripts\Building.cs" />
     <Compile Include="Assets\Scripts\ExportScene.cs" />
     <Compile Include="Assets\Scripts\Point.cs" />
     <Compile Include="Assets\Scripts\Road.cs" />

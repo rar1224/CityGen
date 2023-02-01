@@ -7,7 +7,6 @@ public class Road : MonoBehaviour
     public Point point1;
     public Point point2;
     private Material material;
-
     private void Awake()
     {
 

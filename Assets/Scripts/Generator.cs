@@ -25,19 +25,17 @@ public class Generator : MonoBehaviour
     private int counter = 0;
     private bool generating = false;
 
+    private int maxCount = 50;
+
     public GameObject model;
 
     private List<Point> points = new List<Point>();
     private List<Point> centre = new List<Point>();
     public List<Road> roads = new List<Road>();
-
     private List<Point> outsidePoints = new List<Point>();
 
-
-    // Start is called before the first frame update
     void Start()
     {
-        //CreateCentre(CentreShape.SQUARE, 3f);
     }
 
     public void CreateCentre(CentreShape shape, float width = 20f, float height = 20f, float lineSmoothness = 0.8f)
@@ -50,8 +48,8 @@ public class Generator : MonoBehaviour
             case CentreShape.SQUARE:
                 SquareCentre();
                 break;
-            case CentreShape.TETRA:
-                TetraCentre();
+            case CentreShape.TETRAGON:
+                TetragonCentre();
                 break;
             case CentreShape.LINE:
                 LineCentre(width, height, lineSmoothness);
@@ -61,7 +59,7 @@ public class Generator : MonoBehaviour
 
     void TriangleCentre()
     {
-        Point pt1 = SpawnAnyPoint(new Vector2(0, 0), upper_range);
+        Point pt1 = SpawnAnyPoint(new Vector2(0, 0), upper_range, lower_range);
         points.Add(pt1);
         centre.Add(pt1);
         outsidePoints.Add(pt1);
@@ -70,40 +68,32 @@ public class Generator : MonoBehaviour
         {
             Vector2 dir = Random.insideUnitCircle.normalized * Random.Range(lower_range, upper_range);
             Point pt = SpawnPoint(centre[i].transform.position.x + dir.x, centre[i].transform.position.y + dir.y);
+
+            ConnectPoints(pt, centre[i]);
             points.Add(pt);
             centre.Add(pt);
             outsidePoints.Add(pt);
         }
 
-        ConnectPoints(points[0], points[1]);
-        ConnectPoints(points[1], points[2]);
         ConnectPoints(points[2], points[0]);
     }
 
-    void TetraCentre()
+    void TetragonCentre()
     {
-        float pos1x = Random.Range(lower_range, upper_range)/2;
-        float pos1y = Random.Range(lower_range, upper_range)/2;
-
-        Point pt1 = SpawnPoint(0, 0);
-        Point pt2 = SpawnPoint(-pos1x, -pos1y + Random.Range(lower_range, upper_range));
-        Point pt3 = SpawnPoint(pt2.transform.position.x + Random.Range(lower_range, upper_range), pt2.transform.position.y);
-        Point pt4 = SpawnPoint(pt3.transform.position.x, pt3.transform.position.y - Random.Range(lower_range, upper_range));
-        
+        Point pt1 = SpawnAnyPoint(new Vector2(0, 0), upper_range, lower_range);
+        points.Add(pt1);
         centre.Add(pt1);
-        centre.Add(pt2);
-        centre.Add(pt3);
-        centre.Add(pt4);
-
-        for (int i = 0; i < 4; i++)
-        {
-            points.Add(centre[i]);
-            outsidePoints.Add(centre[i]);
-        }
+        outsidePoints.Add(pt1);
 
         for (int i = 0; i < 3; i++)
         {
-            ConnectPoints(centre[i], centre[i + 1]);
+            Vector2 dir = Random.insideUnitCircle.normalized * Random.Range(lower_range, upper_range);
+            Point pt = SpawnPoint(centre[i].transform.position.x + dir.x, centre[i].transform.position.y + dir.y);
+
+            ConnectPoints(pt, centre[i]);
+            points.Add(pt);
+            centre.Add(pt);
+            outsidePoints.Add(pt);
         }
 
         ConnectPoints(centre[3], centre[0]);
@@ -246,9 +236,8 @@ public class Generator : MonoBehaviour
 
         while (pt == null)
         {
-            if (counter > 50)
+            if (counter > maxCount)
             {
-                origin.gameObject.GetComponent<Renderer>().material.color = Color.red;
                 outsidePoints.Remove(origin);
                 return null;
             }
@@ -280,7 +269,6 @@ public class Generator : MonoBehaviour
                     if (hit.collider.tag == "Point")
                     {
                         Point chosen = hit.collider.gameObject.GetComponent<Point>();
-                        Vector2 vector = chosen.transform.position - origin.transform.position;
 
                         if (chosen != origin && CheckConnectivity(origin, chosen))
                         {
@@ -383,16 +371,18 @@ public class Generator : MonoBehaviour
         return pt;
     }
 
-    Point SpawnAnyPoint(Vector2 origin_position, float range)
+    Point SpawnAnyPoint(Vector2 origin_position, float upper_range, float lower_range)
     {
-        float x = Random.Range(origin_position.x - range, origin_position.x + range);
-        float y = Random.Range(origin_position.x - range, origin_position.y + range);
-        return SpawnPoint(x, y);
+        float length = Random.Range(lower_range, upper_range);
+        Vector2 vector = Random.insideUnitCircle.normalized;
+
+        Vector2 pos = origin_position + vector * length;
+        return SpawnPoint(pos.x, pos.y);
     }
 
     Point SpawnRandomPoint(Point origin)
     {
-        Point chosen_point = SpawnAnyPoint(origin.transform.position, 3.0f);
+        Point chosen_point = SpawnAnyPoint(origin.transform.position, upper_range, lower_range);
 
         if (CheckConnectivity(origin, chosen_point))
         {
@@ -423,7 +413,6 @@ public class Generator : MonoBehaviour
         {
             Vector3 direction = (origin.transform.position - current_road.transform.position).normalized;
             Vector2 point_position = origin.transform.position + direction * Random.Range(lower_range, upper_range);
-
             Point regular_point = SpawnPoint(point_position.x, point_position.y);
 
             // perpendicular
@@ -465,6 +454,21 @@ public class Generator : MonoBehaviour
         
     }
 
+    Road FindValidHit(RaycastHit hit, Point origin)
+    {
+        if (hit.collider.gameObject.tag == "Road")
+        {
+            Road matched_road = hit.collider.gameObject.GetComponent<Road>();
+            if (matched_road.point1 != origin && matched_road.point2 != origin)
+            {
+                return matched_road;
+            }
+            return null;
+        }
+        return null;
+    }
+
+
     // spawn parallel when possible and nothing in the way
     Point SpawnParallelPoint(Point origin, Road current_road, Point pt, Vector3 direction)
     {
@@ -475,40 +479,35 @@ public class Generator : MonoBehaviour
         RaycastHit[] hit_right = Physics.RaycastAll(pt.transform.position, right);
         float distance_to_hit = 0;
         Road matched_road = null;
-        bool set = false;
 
         foreach (RaycastHit hit in hit_left)
         {
-            if (hit.collider.gameObject.tag == "Road")
+            Road rd = FindValidHit(hit, origin);
+
+            if (rd != null)
             {
-                matched_road = hit.collider.gameObject.GetComponent<Road>();
-                if (matched_road.point1 != origin && matched_road.point2 != origin)
-                {
-                    distance_to_hit = hit.distance;
-                    set = true;
-                }
-                break;
+                distance_to_hit = hit.distance;
+                matched_road = rd;
             }
         }
 
-        if (!set)
+        if (matched_road == null)
         {
             foreach (RaycastHit hit in hit_right)
             {
-                if (hit.collider.gameObject.tag == "Road")
+                Road rd = FindValidHit(hit, origin);
+
+                if (rd != null)
                 {
-                    matched_road = hit.collider.gameObject.GetComponent<Road>();
-                    if (matched_road.point1 != origin && matched_road.point2 != origin)
-                    {
-                        distance_to_hit = hit.distance;
-                        set = true;
-                    }
-                    break;
+                    distance_to_hit = hit.distance;
+                    matched_road = rd;
                 }
             }
         }
 
-        if (set)
+        
+
+        if (matched_road != null)
         {
             Destroy(pt.gameObject);
             distance_to_hit += roadColliderRadius;
@@ -521,43 +520,25 @@ public class Generator : MonoBehaviour
             {
 
             // the other road - road x
-            Vector2 road_vector = matched_road.GetOtherPoint(start_other).transform.position - start_other.transform.position;
-            float other_mag = Vector3.Distance(matched_road.point1.transform.position, matched_road.point2.transform.position);
-
-            // the current road - road a
-            float current_mag = current_road.GetMagnitude();
+            Vector2 road_x_vector = matched_road.GetOtherPoint(start_other).transform.position - start_other.transform.position;
+            float road_x_mag = matched_road.GetMagnitude();
 
             // angle between starting points of roads x and a
-                Vector2 angle_vector = start_current.transform.position - start_other.transform.position;
-                float angle = Vector2.Angle(road_vector, angle_vector);
+            Vector2 angle_vector = origin.transform.position - start_other.transform.position;
+            float angle = Mathf.Abs(Vector2.Angle(road_x_vector, angle_vector));
 
                 // defining the difference (y) between current (a) and matched (x) roads
-                float y;
+            float y;
 
-                if (angle > 90)
-                {
-                    // matched road is longer
-                    angle = 90 - angle;
-                    y = distance_to_hit * Mathf.Tan(angle);
-                }
-                else if (angle == 0 || angle == 90)
-                {
-                    y = 0;
-                }
-                else
-                {
-                    y = -distance_to_hit * Mathf.Tan(angle);
-                }
+            if (angle != 90 && angle != 0) y = -distance_to_hit / Mathf.Tan((Mathf.PI / 180) * angle);
+            else y = 0;
 
                 // calculating b
-                float b = y + other_mag - current_mag;
+            float b = y + road_x_mag;
 
+            Vector2 new_position = new Vector2(origin.transform.position.x, origin.transform.position.y) + road_x_vector.normalized * b;
 
-                float angle2 = Vector2.Angle(direction, road_vector);
-                //Vector2 new_position = origin.transform.position + direction.normalized * (other_mag * Mathf.Cos(angle2));
-                Vector2 new_position = origin.transform.position + direction.normalized * b;
-
-                Point pt2 = SpawnPoint(new_position.x, new_position.y);
+            Point pt2 = SpawnPoint(new_position.x, new_position.y);
 
                 if (!CheckConnectivity(origin, pt2))
                 {
@@ -583,16 +564,14 @@ public class Generator : MonoBehaviour
 
     Point SpawnPerpendicularPoint(Point origin, Vector3 direction, float lower_range, float upper_range)
     {
-        Vector2 left = Vector2.Perpendicular(direction);
-        Vector2 right = -left;
         Vector2 new_dir;
 
         if (Random.Range(0, 2) == 0)
         {
-            new_dir = left;
+            new_dir = Vector2.Perpendicular(direction);
         } else
         {
-            new_dir = right;
+            new_dir = -Vector2.Perpendicular(direction);
         }
 
         Vector2 point_position = new Vector2(origin.transform.position.x, origin.transform.position.y) + new_dir * Random.Range(lower_range, upper_range);
@@ -644,6 +623,16 @@ public class Generator : MonoBehaviour
 
     public bool CheckConnectivity(Point point1, Point point2)
     {
+        // check if points are placed correctly
+        if (point1 == point2)
+        {
+            return false;
+        }
+        if (!CheckPlacement(point2))
+        {
+            return false;
+        }
+
         // check if there aren't too many lanes
         if (point1.connections.Count > 5 || point2.connections.Count > 5)
         {
@@ -672,16 +661,6 @@ public class Generator : MonoBehaviour
         // check the possible length of road between
         Vector2 pointVector = point2.transform.position - point1.transform.position;
         if (pointVector.magnitude < lower_range || pointVector.magnitude > upper_range)
-        {
-            return false;
-        }
-
-        // check if points are placed correctly
-        if (point1 == point2)
-        {
-            return false;
-        }
-        if (!CheckPlacement(point2))
         {
             return false;
         }
@@ -736,8 +715,7 @@ public class Generator : MonoBehaviour
         return true;
     }
 
-    public void RestartParameters(float contPreference, float perpPreference, float connectPreference, float lower_range, float upper_range, int iterations,
-        float roadColliderRadius)
+    public void RestartParameters(float contPreference, float perpPreference, float connectPreference, float lower_range, float upper_range, int iterations)
     {
         this.contPreference = contPreference;
         this.perpPreference = perpPreference;
@@ -745,7 +723,6 @@ public class Generator : MonoBehaviour
         this.lower_range = lower_range;
         this.upper_range = upper_range;
         this.iterations = iterations;
-        this.roadColliderRadius = roadColliderRadius;
         generating = true;
     }
 
@@ -789,6 +766,6 @@ public class Generator : MonoBehaviour
 
     public enum CentreShape
     {
-        TRIANGLE, TETRA, LINE, SQUARE
+        TRIANGLE, TETRAGON, LINE, SQUARE
     }
 }

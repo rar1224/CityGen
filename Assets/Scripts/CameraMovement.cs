@@ -7,7 +7,6 @@ public class CameraMovement : MonoBehaviour
     public GameObject centre;
     private float sensitivity = 0.5f;
     private float horizontal = 1.5f;
-    private float vertical = 1.5f;
 
     // Start is called before the first frame update
     void Start()
